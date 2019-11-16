@@ -9,6 +9,7 @@ class Minion(object):
         self.r = 10
         self.velocity = 2
         self.isMoving = False
+        self.rect = pygame.Rect(self.x, self.y, self.r*2, self.r*2)
 
     def move(self):
         if self.isMoving:
@@ -18,6 +19,7 @@ class Minion(object):
                 self.isMoving = False
             else:
                 self.x, self.y = self.x + dx, self.y + dy
+                self.rect = pygame.Rect(self.x, self.y, self.r*2, self.r*2)
             
     def setMoveStatus(self,coords):
         if self.isSelected:
@@ -33,7 +35,6 @@ class Minion(object):
             self.destination = coords
 
     def checkSelection(self, selection):
-        
         if isinstance(selection, tuple):
             (event_x, event_y) = selection
             if (self.x - event_x) ** 2 + (self.y - event_y) ** 2 \
@@ -41,10 +42,6 @@ class Minion(object):
                 self.isSelected = True
             else: self.isSelected = False
 
-            
-        elif isinstance(selection, pygame.Rect):
-            # do the rect thing
-            pass
     def draw(self, screen):
         pygame.draw.circle(screen, self.color,\
                 (int(self.x), int(self.y)), self.r)
@@ -66,19 +63,38 @@ class PygameGame(object):
         self.fps = fps
         self.title = title
         ### temp minion #####
-        self.minion = Minion(self.width / 2, self.height / 2)
+        self.minions = [Minion(self.width / 2, self.height / 2), \
+                        Minion(self.width / 3, self.height / 3) ]
 
         pygame.init()
 
         # add your functions here
-
     def timerFired(self, dt):
-        self.minion.move()
-    
+        for minion in self.minions:
+            minion.move()
+
+    def mouseDrag(self, event_x, event_y):
+        if not self.isDraggingMouse:
+            self.dragStartPos = (event_x, event_y)
+            self.isDraggingMouse = True
+        
+        start_x, start_y = self.dragStartPos
+        width = event_x - start_x
+        height = event_y - start_y
+        self.selectionBox = pygame.Rect(self.dragStartPos, (width, height))
+        for minion in self.minions:
+            if self.selectionBox.colliderect(minion.rect):
+                minion.isSelected = True
+
+    def mouseReleased(self, event_x, event_y):
+        if self.isDraggingMouse:
+            self.isDraggingMouse = False
+
     def keyPressed(self, key):
         if key == pygame.K_s:
-            if self.minion.isSelected:
-                self.minion.isMoving = False
+            for minion in self.minions:
+                if minion.isSelected:
+                    minion.isMoving = False
 
     def redrawAll(self, screen):
         pass
@@ -88,6 +104,8 @@ class PygameGame(object):
         clock = pygame.time.Clock()
         screen = pygame.display.set_mode((self.width, self.height))
         self._keys = dict()
+        self.isDraggingMouse = False
+        self.selectionBox = None
 
         pygame.display.set_caption(self.title)
 
@@ -100,16 +118,25 @@ class PygameGame(object):
                 if event.type == pygame.QUIT:
                     playing = False
                 # put your events here
-
+                
+                ## mouse drag
+                if (event.type == pygame.MOUSEMOTION and
+                      event.buttons[0] == 1):
+                    self.mouseDrag(*(event.pos))
+                ### mouse released
+                elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+                    self.mouseReleased(*(event.pos))
                 ### mouse Pressed
                 # left click
-                if pygame.mouse.get_pressed()[0]:
+                elif pygame.mouse.get_pressed()[0]:
                     coords = pygame.mouse.get_pos()
-                    self.minion.checkSelection(coords)
+                    for minion in self.minions:
+                        minion.checkSelection(coords)
                 # right click
-                if pygame.mouse.get_pressed()[2]:
+                elif pygame.mouse.get_pressed()[2]:
                     coords = pygame.mouse.get_pos()
-                    self.minion.setMoveStatus(coords)
+                    for minion in self.minions:
+                        minion.setMoveStatus(coords)
 
                 # key presses
                 if event.type == pygame.KEYDOWN:
@@ -120,7 +147,12 @@ class PygameGame(object):
             #fill background colors of surfaces
             screen.fill((255, 255, 242))
 
-            self.minion.draw(screen)
+            for minion in self.minions:
+                minion.draw(screen)
+
+            if self.selectionBox != None:
+                pygame.draw.rect(screen, (0,0,0),self.selectionBox,True)
+                self.selectionBox = None
 
             self.redrawAll(screen)
             pygame.display.flip()
