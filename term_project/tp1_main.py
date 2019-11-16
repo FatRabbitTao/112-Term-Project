@@ -1,6 +1,7 @@
 import pygame, math, random, copy, time
 
 from tp1_player import *
+from tp1_attacker import *
     
 #edited from http://blog.lukasperaza.com/getting-started-with-pygame/
 class PygameGame(object):
@@ -110,7 +111,6 @@ class PygameGame(object):
             pygame.display.flip()
 
         pygame.quit()
-
 
 game = PygameGame()
 game.run()
