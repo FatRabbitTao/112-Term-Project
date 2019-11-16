@@ -1,6 +1,6 @@
 import pygame, math, random, copy, time
 
-class Minion(object):
+class Cell(object):
     def __init__(self, x, y):
         self.x, self.y = x, y
         self.isSelected = False
@@ -47,3 +47,12 @@ class Minion(object):
         if self.isSelected:
             pygame.draw.circle(screen, (200,0,0),\
                 (int(self.x), int(self.y)), self.r + 2, True)
+
+class Building(object):
+    pass
+
+class Resource(object):
+    pass
+
+class Player(object):
+    pass

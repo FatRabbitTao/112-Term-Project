@@ -15,16 +15,16 @@ class PygameGame(object):
         self.height = height
         self.fps = fps
         self.title = title
-        ### temp minion #####
-        self.minions = [Minion(self.width / 2, self.height / 2), \
-                        Minion(self.width / 3, self.height / 3) ]
+        ### temp cell #####
+        self.cells = [Cell(self.width / 2, self.height / 2), \
+                        Cell(self.width / 3, self.height / 3) ]
 
         pygame.init()
 
         # add your functions here
     def timerFired(self, dt):
-        for minion in self.minions:
-            minion.move()
+        for cell in self.cells:
+            cell.move()
 
     def mouseDrag(self, event_x, event_y):
         if not self.isDraggingMouse:
@@ -35,9 +35,9 @@ class PygameGame(object):
         width = event_x - start_x
         height = event_y - start_y
         self.selectionBox = pygame.Rect(self.dragStartPos, (width, height))
-        for minion in self.minions:
-            if self.selectionBox.colliderect(minion.rect):
-                minion.isSelected = True
+        for cell in self.cells:
+            if self.selectionBox.colliderect(cell.rect):
+                cell.isSelected = True
 
     def mouseReleased(self, event_x, event_y):
         if self.isDraggingMouse:
@@ -45,9 +45,9 @@ class PygameGame(object):
 
     def keyPressed(self, key):
         if key == pygame.K_s:
-            for minion in self.minions:
-                if minion.isSelected:
-                    minion.isMoving = False
+            for cell in self.cells:
+                if cell.isSelected:
+                    cell.isMoving = False
 
     def redrawAll(self, screen):
         pass
@@ -72,6 +72,8 @@ class PygameGame(object):
                     playing = False
                 # put your events here
                 
+                ####################################################
+                ############### MOUSE STUFF ########################
                 ## mouse drag
                 if (event.type == pygame.MOUSEMOTION and
                       event.buttons[0] == 1):
@@ -83,26 +85,31 @@ class PygameGame(object):
                 # left click
                 elif pygame.mouse.get_pressed()[0]:
                     coords = pygame.mouse.get_pos()
-                    for minion in self.minions:
-                        minion.checkSelection(coords)
+                    for cell in self.cells:
+                        cell.checkSelection(coords)
                 # right click
                 elif pygame.mouse.get_pressed()[2]:
                     coords = pygame.mouse.get_pos()
-                    for minion in self.minions:
-                        minion.setMoveStatus(coords)
+                    for cell in self.cells:
+                        cell.setMoveStatus(coords)
 
+                ###########################################################
+                ################# KEY STUFF ###############################
                 # key presses
                 if event.type == pygame.KEYDOWN:
                     self._keys[event.key] = True
                     self.keyPressed(event.key)
 
+            #####################################################
             ################### Drawings ########################
             #fill background colors of surfaces
             screen.fill((255, 255, 242))
 
-            for minion in self.minions:
-                minion.draw(screen)
-
+            # draw cells
+            for cell in self.cells:
+                cell.draw(screen)
+            
+            # draw selection box
             if self.selectionBox != None:
                 pygame.draw.rect(screen, (0,0,0),self.selectionBox,True)
                 self.selectionBox = None
