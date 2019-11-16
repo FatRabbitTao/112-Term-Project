@@ -14,7 +14,7 @@ class Minion(object):
         if self.isMoving:
             (dx, dy) = self.movingDir
             (x, y) = self.destination
-            if int(abs(self.x - x)) < 1 or int(abs(self.y - y)) < 1:
+            if abs(self.x - x) < 0.5 or abs(self.y - y) < 0.5:
                 self.isMoving = False
             else:
                 self.x, self.y = self.x + dx, self.y + dy
@@ -74,6 +74,11 @@ class PygameGame(object):
 
     def timerFired(self, dt):
         self.minion.move()
+    
+    def keyPressed(self, key):
+        if key == pygame.K_s:
+            if self.minion.isSelected:
+                self.minion.isMoving = False
 
     def redrawAll(self, screen):
         pass
@@ -82,30 +87,36 @@ class PygameGame(object):
 
         clock = pygame.time.Clock()
         screen = pygame.display.set_mode((self.width, self.height))
-        
+        self._keys = dict()
+
         pygame.display.set_caption(self.title)
 
         playing = True
         while playing:
             time = clock.tick(self.fps)
             self.timerFired(time)            
-
+            ################## Events ###########################
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     playing = False
                 # put your events here
 
                 ### mouse Pressed
-                
                 # left click
                 if pygame.mouse.get_pressed()[0]:
                     coords = pygame.mouse.get_pos()
                     self.minion.checkSelection(coords)
-
+                # right click
                 if pygame.mouse.get_pressed()[2]:
                     coords = pygame.mouse.get_pos()
                     self.minion.setMoveStatus(coords)
-                    
+
+                # key presses
+                if event.type == pygame.KEYDOWN:
+                    self._keys[event.key] = True
+                    self.keyPressed(event.key)
+
+            ################### Drawings ########################
             #fill background colors of surfaces
             screen.fill((255, 255, 242))
 
