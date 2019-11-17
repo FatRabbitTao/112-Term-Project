@@ -2,10 +2,9 @@ import pygame, math, random, copy, time
 
 from tp1_player import *
 from tp1_attacker import *
-    
+
 #edited from http://blog.lukasperaza.com/getting-started-with-pygame/
 class PygameGame(object):
-
     def isKeyPressed(self, key):
         ''' return whether a specific key is being held '''
         return self._keys.get(key, False)
@@ -30,7 +29,7 @@ class PygameGame(object):
         if not self.isDraggingMouse:
             self.dragStartPos = (event_x, event_y)
             self.isDraggingMouse = True
-        
+
         start_x, start_y = self.dragStartPos
         width = event_x - start_x
         height = event_y - start_y
@@ -71,7 +70,6 @@ class PygameGame(object):
                 if event.type == pygame.QUIT:
                     playing = False
                 # put your events here
-                
                 ####################################################
                 ############### MOUSE STUFF ########################
                 ## mouse drag
