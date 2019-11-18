@@ -14,27 +14,58 @@ class PygameGame(object):
         self.height = height
         self.fps = fps
         self.title = title
-        ### temp cell #####
-        self.cells = [Cell(self.width / 2, self.height / 2), \
-                        Cell(self.width / 3, self.height / 3) ]
+        self.all_rects = [ ]
+
+        ### there shld be a way to store all the rects / objects
+        ## To - do
+        
+
+        self.player = Player(self)
 
         pygame.init()
 
-        # add your functions here
+#####################################################################
+################ Controllers ########################################
     def timerFired(self, dt):
-        for cell in self.cells:
-            cell.move()
+        for cell in self.player.cells:
+            if not cell.isMoving: continue
+            for other_cell in self.player.cells:
+                if cell == other_cell: continue
+                _rect = other_cell.rect
+            
+                if cell.rect.colliderect(_rect): # if the 2 cells touched
+                    x0, y0 = cell.rect[0], cell.rect[1]  
+                    x1, y1 = other_cell.rect[0], other_cell.rect[1]
+                    other_cell.movingDir = cell.movingDir
+                    xdiff = x1 - x0
+                    ydiff = y1 - y0
+                    cell.x -= xdiff / 2
+                    cell.y -= ydiff / 2
+                    cell.touching = other_cell.touching = True
+
+                    # stop them if destination is in the middle ie reached
+                    if min(x0, x1) <= cell.destination[0] <= max(x0, x1) and \
+                        min(y0, y1) <= cell.destination[1] <= max(y0, y1):
+                        cell.isMoving = False
+                        other_cell.isMoving = False
+                    elif not cell.isMoving:
+                        other_cell.isMoving = False
+                else: cell.touching = other_cell.touching = False
+                    
+            cell.move(self)
 
     def mouseDrag(self, event_x, event_y):
         if not self.isDraggingMouse:
             self.dragStartPos = (event_x, event_y)
             self.isDraggingMouse = True
-
+        self.createSelectionBox(event_x, event_y)
+        
+    def createSelectionBox(self, event_x, event_y):
         start_x, start_y = self.dragStartPos
         width = event_x - start_x
         height = event_y - start_y
         self.selectionBox = pygame.Rect(self.dragStartPos, (width, height))
-        for cell in self.cells:
+        for cell in self.player.cells:
             if self.selectionBox.colliderect(cell.rect):
                 cell.isSelected = True
 
@@ -42,14 +73,21 @@ class PygameGame(object):
         if self.isDraggingMouse:
             self.isDraggingMouse = False
 
+    def leftClick(self, coords):
+        for cell in self.player.cells:
+            cell.checkSelection(coords)
+
+    def rightClick(self, coords):
+        for cell in self.player.cells:
+            cell.setMoveStatus(coords)
+            
     def keyPressed(self, key):
         if key == pygame.K_s:
-            for cell in self.cells:
+            for cell in self.player.cells:
                 if cell.isSelected:
                     cell.isMoving = False
-
-    def redrawAll(self, screen):
-        pass
+###########################################################################
+    def redrawAll(self, screen): pass
 
     def run(self):
 
@@ -83,13 +121,11 @@ class PygameGame(object):
                 # left click
                 elif pygame.mouse.get_pressed()[0]:
                     coords = pygame.mouse.get_pos()
-                    for cell in self.cells:
-                        cell.checkSelection(coords)
+                    self.leftClick(coords)
                 # right click
                 elif pygame.mouse.get_pressed()[2]:
                     coords = pygame.mouse.get_pos()
-                    for cell in self.cells:
-                        cell.setMoveStatus(coords)
+                    self.rightClick(coords)
 
                 ###########################################################
                 ################# KEY STUFF ###############################
@@ -104,7 +140,7 @@ class PygameGame(object):
             screen.fill((255, 255, 242))
 
             # draw cells
-            for cell in self.cells:
+            for cell in self.player.cells:
                 cell.draw(screen)
             
             # draw selection box
