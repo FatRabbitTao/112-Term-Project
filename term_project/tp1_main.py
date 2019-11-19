@@ -14,45 +14,19 @@ class PygameGame(object):
         self.height = height
         self.fps = fps
         self.title = title
-        self.all_rects = [ ]
+        # list of objects, when checking, check obj.rect
+        self.all_objects = [ ]
 
         ### there shld be a way to store all the rects / objects
         ## To - do
         
-
         self.player = Player(self)
 
         pygame.init()
-
 #####################################################################
 ################ Controllers ########################################
     def timerFired(self, dt):
-        for cell in self.player.cells:
-            if not cell.isMoving: continue
-            for other_cell in self.player.cells:
-                if cell == other_cell: continue
-                _rect = other_cell.rect
-            
-                if cell.rect.colliderect(_rect): # if the 2 cells touched
-                    x0, y0 = cell.rect[0], cell.rect[1]  
-                    x1, y1 = other_cell.rect[0], other_cell.rect[1]
-                    other_cell.movingDir = cell.movingDir
-                    xdiff = x1 - x0
-                    ydiff = y1 - y0
-                    cell.x -= xdiff / 2
-                    cell.y -= ydiff / 2
-                    cell.touching = other_cell.touching = True
-
-                    # stop them if destination is in the middle ie reached
-                    if min(x0, x1) <= cell.destination[0] <= max(x0, x1) and \
-                        min(y0, y1) <= cell.destination[1] <= max(y0, y1):
-                        cell.isMoving = False
-                        other_cell.isMoving = False
-                    elif not cell.isMoving:
-                        other_cell.isMoving = False
-                else: cell.touching = other_cell.touching = False
-                    
-            cell.move(self)
+        self.player.moveCells()
 
     def mouseDrag(self, event_x, event_y):
         if not self.isDraggingMouse:
@@ -76,6 +50,8 @@ class PygameGame(object):
     def leftClick(self, coords):
         for cell in self.player.cells:
             cell.checkSelection(coords)
+        for building in self.player.buildings:
+            building.checkSelection(coords)
 
     def rightClick(self, coords):
         for cell in self.player.cells:
@@ -86,11 +62,15 @@ class PygameGame(object):
             for cell in self.player.cells:
                 if cell.isSelected:
                     cell.isMoving = False
+        if key == pygame.K_c:
+            for building in self.player.buildings:
+                if building.isSelected:
+                    building.produce()
+
 ###########################################################################
     def redrawAll(self, screen): pass
 
     def run(self):
-
         clock = pygame.time.Clock()
         screen = pygame.display.set_mode((self.width, self.height))
         self._keys = dict()
@@ -142,6 +122,9 @@ class PygameGame(object):
             # draw cells
             for cell in self.player.cells:
                 cell.draw(screen)
+            
+            for building in self.player.buildings:
+                building.draw(screen)
             
             # draw selection box
             if self.selectionBox != None:
