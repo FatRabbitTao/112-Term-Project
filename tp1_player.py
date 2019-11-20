@@ -13,6 +13,7 @@ class Cell(object):
         self.movingDir = (0, 0)
         self.health = 5
         self.attackTarget = None
+        self.birth_time = pygame.time.get_ticks()
 
     def __eq__(self, other):
         return type(self) == type(other) \
@@ -68,6 +69,12 @@ class Cell(object):
     def attack(self):
         if self.attackTarget != None:
             if self.isMoving: return
+            # else
+            nowTime = pygame.time.get_ticks()
+            timeDiff = nowTime - self.birth_time
+            if timeDiff <= 500: return
+            # else:
+            self.birth_time = nowTime
             for virus in self.player.app.AI.viruses:
                 print('hmmm can i attack?')
                 if (self.x - virus.x)**2 + (self.y - virus.y)**2 <= 20 * self.r **2:
@@ -77,6 +84,7 @@ class Cell(object):
                 print('nah')
             print('no more')
             self.attackTarget = None
+
 
     def getAttacked(self):
         self.health -= 1

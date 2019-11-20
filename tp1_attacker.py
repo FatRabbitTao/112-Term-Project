@@ -11,7 +11,8 @@ class Virus(object):
         self.isMoving = False
         self.rect = pygame.Rect(self.x - self.r, self.y - self.r, self.r*2, self.r*2)
 
-        self.health = 4
+        self.health = 10
+        self.barWidth = self.r * 2 / self.health
         self.movingDir = (0, 0)
 
     def __eq__(self, other):
@@ -28,12 +29,20 @@ class Virus(object):
             self.AI.viruses.remove(self)
             print('virus died')
 
-    def drawHealthBar(self,screen):
-        pass
+    def drawHealthBar(self,screen):    
+        height = self.r / 5
+
+        start_x = self.x - self.r
+        start_y = self.y - self.r - height
+
+        for i in range(self.health):
+            tempRect = pygame.Rect(start_x + i * self.barWidth, start_y, self.barWidth, height)
+            pygame.draw.rect(screen, (255,0,0), tempRect, 1)
 
     def draw(self, screen):
         pygame.draw.circle(screen, self.color,\
                 (int(self.x), int(self.y)), self.r)
+        self.drawHealthBar(screen)
 
 class AI(object):
     def __init__(self, app):
