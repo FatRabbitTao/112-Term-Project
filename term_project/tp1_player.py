@@ -155,6 +155,7 @@ class Player(object):
 
     def build(self, app, x, y):
         newBuilding = Building(x, y, self)
+        
         self.buildings.append(newBuilding)
 
     ##### automatic functions #### 
