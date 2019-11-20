@@ -21,12 +21,14 @@ class PygameGame(object):
         ## To - do
         
         self.player = Player(self)
+        self.AI = AI(self)
 
         pygame.init()
 #####################################################################
 ################ Controllers ########################################
     def timerFired(self, dt):
         self.player.moveCells()
+        self.player.attack()
 
     def mouseDrag(self, event_x, event_y):
         if not self.isDraggingMouse:
@@ -52,6 +54,12 @@ class PygameGame(object):
             cell.checkSelection(coords)
         for building in self.player.buildings:
             building.checkSelection(coords)
+
+    def setAttackStatus(self, coords):
+        for cell in self.player.cells:
+            if cell.isSelected:
+                cell.attackTarget = coords
+                cell.setAttackStatus()
 
     def rightClick(self, coords):
         for cell in self.player.cells:
@@ -99,6 +107,11 @@ class PygameGame(object):
                     self.mouseReleased(*(event.pos))
                 ### mouse Pressed
                 # left click
+                # attacks
+                elif pygame.key.get_pressed()[pygame.K_a] and \
+                    pygame.mouse.get_pressed()[0]:
+                    self.setAttackStatus(pygame.mouse.get_pos())
+                # normal
                 elif pygame.mouse.get_pressed()[0]:
                     coords = pygame.mouse.get_pos()
                     self.leftClick(coords)
@@ -113,18 +126,18 @@ class PygameGame(object):
                 if event.type == pygame.KEYDOWN:
                     self._keys[event.key] = True
                     self.keyPressed(event.key)
+                    if pygame.key.get_pressed()[pygame.K_b]:
+                        (x,y) = pygame.mouse.get_pos()
+                        self.player.build(x, y)
 
             #####################################################
             ################### Drawings ########################
             #fill background colors of surfaces
             screen.fill((255, 255, 242))
 
-            # draw cells
-            for cell in self.player.cells:
-                cell.draw(screen)
-            
-            for building in self.player.buildings:
-                building.draw(screen)
+            # draw everything
+            self.player.draw(screen)
+            self.AI.draw(screen)
             
             # draw selection box
             if self.selectionBox != None:

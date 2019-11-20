@@ -1,7 +1,7 @@
 import pygame, math, random, copy, time
 
 class Cell(object):
-    def __init__(self, player, x, y, n = 1):
+    def __init__(self, player, x, y):
         self.player = player
         self.x, self.y = x, y
         self.isSelected = False
@@ -10,9 +10,9 @@ class Cell(object):
         self.velocity = 2
         self.isMoving = False
         self.rect = pygame.Rect(self.x - self.r, self.y - self.r, self.r*2, self.r*2)
-        self.touching = False
         self.movingDir = (0, 0)
-        self.num = n
+        self.health = 5
+        self.attackTarget = None
 
     def __eq__(self, other):
         return type(self) == type(other) \
@@ -39,7 +39,7 @@ class Cell(object):
                     self.checkCollision()
 
     def checkCollision(self):
-        temp = self.player.cells + self.player.buildings
+        temp = self.player.cells + self.player.buildings + self.player.app.AI.viruses
         for obj in temp:
             # skip if they are actually the same cell
             if self == obj:
@@ -58,6 +58,33 @@ class Cell(object):
                 return True
         return False
             
+    def setAttackStatus(self):
+        if self.attackTarget == None: return 
+        (x, y) = self.attackTarget
+        if abs(self.x - x) > 5 * self.r or abs(self.y - y) > 5 * self.r:
+            self.isMoving = True
+            self.destination = self.attackTarget
+        
+    def attack(self):
+        if self.attackTarget != None:
+            if self.isMoving: return
+            for virus in self.player.app.AI.viruses:
+                print('hmmm can i attack?')
+                if (self.x - virus.x)**2 + (self.y - virus.y)**2 <= 20 * self.r **2:
+                    print('ye')
+                    virus.getAttacked()
+                    return
+                print('nah')
+            print('no more')
+            self.attackTarget = None
+
+    def getAttacked(self):
+        self.health -= 1
+        print('ouch')
+        if self.health <= 0:
+            print('rip')
+            self.player.cells.remove(self)
+
     def setMoveStatus(self,coords):
         if self.isSelected:
             (x, y) = coords
@@ -110,7 +137,6 @@ class Building(object):
     def produce(self):
         i = len(self.isProducing)
         if i >= 4: 
-            print('too much')
             return
         newCell = Cell(self.player, \
             self.x - .8 * self.size + i * self.size/2, self.y + .8 * self.size)
@@ -148,16 +174,23 @@ class Player(object):
     def __init__(self, app):
         self.app = app
         # temp cells
-        self.cells = [Cell(self, self.app.width / 2, self.app.height / 2, 1), 
-                        Cell(self, self.app.width / 3, self.app.height / 3, 2), 
-                        Cell(self, self.app.width * .6, self.app.height * .6, 3)]
-        self.buildings = [Building(100, 300, self)]
+        self.cells = [Cell(self, self.app.width / 2, self.app.height / 2), 
+                        Cell(self, self.app.width / 3, self.app.height / 3), 
+                        Cell(self, self.app.width * .6, self.app.height * .6)]
+        self.buildings = [ ]
 
-    def build(self, app, x, y):
+    def build(self, x, y):
         newBuilding = Building(x, y, self)
-        
-        self.buildings.append(newBuilding)
+        if not self.checkIfOccupied(newBuilding):
+            self.buildings.append(newBuilding)
 
+    def checkIfOccupied(self, newObj):
+        temp = self.cells + self.buildings
+        for obj in temp:
+            _rect = obj.rect
+            if newObj.rect.colliderect(_rect): # if the 2 cells touched
+                return True
+        return False
     ##### automatic functions #### 
     # under timerFired
     def moveCells(self): # mainly check for collision
@@ -165,11 +198,15 @@ class Player(object):
             if cell.isMoving:   
                 cell.move()
 
+    def attack(self):
+        for cell in self.cells:
+            if cell.attackTarget != None:
+                cell.attack()
+
     # when knowing the 2 obj collide
     # obj1 is the one u trying to move
     # more or less done 0. 0
     def collide(self, obj1, obj2):
-        
         x0, y0 = obj1.x, obj1.y
         x1, y1 = obj2.x, obj2.y
 
@@ -198,4 +235,10 @@ class Player(object):
 
         except: obj1.isMoving = False
 
-
+    def draw(self,screen):
+        # draw cells
+        for cell in self.cells:
+            cell.draw(screen)
+        # draw buildings
+        for building in self.buildings:
+            building.draw(screen)
