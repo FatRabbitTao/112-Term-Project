@@ -150,7 +150,6 @@ class Building(object):
                 return
         self.isProducing.append(newCell)
         self.player.cells.append(newCell)
-        # self.isProducing.append(newCell)
 
     def productionProgress(self):
         pass # start from this next time
