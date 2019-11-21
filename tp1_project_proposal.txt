@@ -23,7 +23,7 @@ Week 2: playable AI, terrain generation
 Week 3: graphics, user interface improvement
 
 Version control plan:
-I back up my code daily onto my private github repository. Different versions are named differently as tpx.y_filename.py, where x is the week and y is the different versions, aided by each commit messages.
+I back up my code daily onto my private github repository. Different versions are named differently as tpx.y_filename.py, where x is the week and y is the different versions, aided by each commit message.
 
 Module list:
 pygame
