@@ -29,6 +29,7 @@ class PygameGame(object):
     def timerFired(self, dt):
         self.player.moveCells()
         self.player.attack()
+        self.AI.attack()
 
     def mouseDrag(self, event_x, event_y):
         if not self.isDraggingMouse:

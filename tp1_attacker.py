@@ -14,6 +14,8 @@ class Virus(object):
         self.health = 10
         self.barWidth = self.r * 2 / self.health
         self.movingDir = (0, 0)
+        self.birth_time = pygame.time.get_ticks()
+        #self.attackTarget = None
 
     def __eq__(self, other):
         return type(self) == type(other) \
@@ -22,12 +24,23 @@ class Virus(object):
     def move(self):
         pass
 
+    def attack(self):
+        nowTime = pygame.time.get_ticks()
+        timeDiff = nowTime - self.birth_time
+        if timeDiff <= 500: return
+        # else:
+        self.birth_time = nowTime
+        for cell in self.AI.app.player.cells:
+            if (self.x - cell.x)**2 + (self.y - cell.y)**2 <= 20 * self.r **2:
+                cell.getAttacked()
+                return
+
     def getAttacked(self):
         self.health -= 1
-        print('virus ouch')
+        #print('virus ouch')
         if self.health <= 0:
             self.AI.viruses.remove(self)
-            print('virus died')
+            #print('virus died')
 
     def drawHealthBar(self,screen):    
         height = self.r / 5
@@ -55,6 +68,10 @@ class AI(object):
         for i in range(self.initialNumOfVirus):
             newVirus = Virus(self, self.app.width*.8, self.app.height*(4+i)/16)
             self.viruses.append(newVirus)
+
+    def attack(self):
+        for virus in self.viruses:
+            virus.attack()
 
     def draw(self,screen):
         for virus in self.viruses:

@@ -11,7 +11,10 @@ class Cell(object):
         self.isMoving = False
         self.rect = pygame.Rect(self.x - self.r, self.y - self.r, self.r*2, self.r*2)
         self.movingDir = (0, 0)
-        self.health = 5
+
+        self.health = 12
+        self.barWidth = 2
+
         self.attackTarget = None
         self.birth_time = pygame.time.get_ticks()
 
@@ -76,13 +79,9 @@ class Cell(object):
             # else:
             self.birth_time = nowTime
             for virus in self.player.app.AI.viruses:
-                print('hmmm can i attack?')
                 if (self.x - virus.x)**2 + (self.y - virus.y)**2 <= 20 * self.r **2:
-                    print('ye')
                     virus.getAttacked()
                     return
-                print('nah')
-            print('no more')
             self.attackTarget = None
 
 
@@ -122,12 +121,22 @@ class Cell(object):
                 self.isSelected = True
             else: self.isSelected = False
 
+    def drawHealthBar(self,screen):    
+        height = self.r / 5
+        start_x = self.x - self.r
+        start_y = self.y - self.r - height
+
+        for i in range(self.health):
+            tempRect = pygame.Rect(start_x + i * self.barWidth, start_y, self.barWidth, height)
+            pygame.draw.rect(screen, (255,0,0), tempRect, 1)
+
     def draw(self, screen):
         pygame.draw.circle(screen, self.color,\
                 (int(self.x), int(self.y)), self.r)
         if self.isSelected:
             pygame.draw.circle(screen, (200,0,0),\
                 (int(self.x), int(self.y)), self.r + 2, True)
+        self.drawHealthBar(screen)
 
 class Building(object):
     def __init__(self, x, y, player):
@@ -154,7 +163,7 @@ class Building(object):
             newCell = Cell(self.player, \
             self.x - .8 * self.size + i * self.size / 2, self.y + .8 * self.size)
             if i > 4: 
-                print('can\'t produce')
+                #print('can\'t produce')
                 return
         self.isProducing.append(newCell)
         self.player.cells.append(newCell)
