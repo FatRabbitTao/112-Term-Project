@@ -16,6 +16,8 @@ class PygameGame(object):
         self.title = title
         # list of objects, when checking, check obj.rect
         self.all_objects = [ ]
+        self.rects = [ ]
+        self.scrollX, self.scrollY = 0, 0
 
         ### there shld be a way to store all the rects / objects
         ## To - do
@@ -29,13 +31,19 @@ class PygameGame(object):
     def timerFired(self, dt):
         self.player.moveCells()
         self.player.attack()
+        self.player.production()
         self.AI.attack()
 
     def mouseDrag(self, event_x, event_y):
         if not self.isDraggingMouse:
-            self.dragStartPos = (event_x, event_y)
+            self.dragStartPos = (event_x - self.scrollX, event_y - self.scrollY)
             self.isDraggingMouse = True
-        self.createSelectionBox(event_x, event_y)
+        self.createSelectionBox(event_x - self.scrollX, event_y - self.scrollY)
+
+    def makeVisible(self, dx, dy):
+        self.scrollX += dx
+        self.scrollY += dy
+        #print(self.scrollX, self.scrollY)
         
     def createSelectionBox(self, event_x, event_y):
         start_x, start_y = self.dragStartPos
@@ -45,6 +53,7 @@ class PygameGame(object):
         for cell in self.player.cells:
             if self.selectionBox.colliderect(cell.rect):
                 cell.isSelected = True
+            else: cell.isSelected = False
 
     def mouseReleased(self, event_x, event_y):
         if self.isDraggingMouse:
@@ -111,16 +120,39 @@ class PygameGame(object):
                 # attacks
                 elif pygame.key.get_pressed()[pygame.K_a] and \
                     pygame.mouse.get_pressed()[0]:
-                    self.setAttackStatus(pygame.mouse.get_pos())
+                    x, y = pygame.mouse.get_pos()
+                    self.setAttackStatus((x - self.scrollX, y - self.scrollY))
                 # normal
                 elif pygame.mouse.get_pressed()[0]:
-                    coords = pygame.mouse.get_pos()
-                    self.leftClick(coords)
+                    x, y = pygame.mouse.get_pos()
+                    self.leftClick((x - self.scrollX, y - self.scrollY))
                 # right click
                 elif pygame.mouse.get_pressed()[2]:
-                    coords = pygame.mouse.get_pos()
-                    self.rightClick(coords)
-
+                    x, y = pygame.mouse.get_pos()
+                    self.rightClick((x - self.scrollX, y - self.scrollY))
+                ### mouse move / camera move / side scrolling -ish part
+                if event.type == pygame.MOUSEMOTION:
+                    x, y = pygame.mouse.get_pos()
+                    if (not (x <= 49 and y == 0)) and \
+                        (x in [0, self.width - 1] or y in [0, self.height - 1]):
+                        if x > self.width - 5 and y < 5:
+                            dx, dy = -3, 3
+                        elif x < 5 and y > self.height - 5:
+                            dx, dy = 3, -3
+                        elif x > self.width - 5 and y > self.height - 5:
+                            dx, dy = -3, -3
+                        elif x == 0 or x == self.width - 1:
+                            dy = 0
+                            sign = 1 if x == 0 else - 1
+                            dx = sign * 3
+                        elif y == 0 or y == self.height - 1:
+                            dx = 0
+                            sign = 1 if y == 0 else - 1
+                            dy = sign * 3
+                    
+                        self.makeVisible(dx, dy)
+                        print(dx, dy)
+                        pygame.mouse.set_pos(x, y)
                 ###########################################################
                 ################# KEY STUFF ###############################
                 # key presses
@@ -129,7 +161,7 @@ class PygameGame(object):
                     self.keyPressed(event.key)
                     if pygame.key.get_pressed()[pygame.K_b]:
                         (x,y) = pygame.mouse.get_pos()
-                        self.player.build(x, y)
+                        self.player.build(x - self.scrollX, y - self.scrollY)
 
             #####################################################
             ################### Drawings ########################
@@ -142,7 +174,9 @@ class PygameGame(object):
             
             # draw selection box
             if self.selectionBox != None:
-                pygame.draw.rect(screen, (0,0,0),self.selectionBox,True)
+                temp_rect = self.selectionBox.copy()
+                temp_rect.move_ip(self.scrollX, self.scrollY)
+                pygame.draw.rect(screen, (0,0,0),temp_rect,True)
                 self.selectionBox = None
 
             self.redrawAll(screen)

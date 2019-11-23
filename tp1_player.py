@@ -63,9 +63,10 @@ class Cell(object):
         return False
             
     def setAttackStatus(self):
-        if self.attackTarget == None: return 
+        #if self.attackTarget == None: return 
         (x, y) = self.attackTarget
         if abs(self.x - x) > 5 * self.r or abs(self.y - y) > 5 * self.r:
+            #print(self.rect,'move')
             self.isMoving = True
             self.destination = self.attackTarget
         
@@ -83,7 +84,6 @@ class Cell(object):
                     virus.getAttacked()
                     return
             self.attackTarget = None
-
 
     def getAttacked(self):
         self.health -= 1
@@ -127,15 +127,18 @@ class Cell(object):
         start_y = self.y - self.r - height
 
         for i in range(self.health):
-            tempRect = pygame.Rect(start_x + i * self.barWidth, start_y, self.barWidth, height)
+            tempRect = pygame.Rect(start_x + i * self.barWidth + self.player.app.scrollX,\
+                 start_y + self.player.app.scrollY, self.barWidth, height)
             pygame.draw.rect(screen, (255,0,0), tempRect, 1)
 
     def draw(self, screen):
         pygame.draw.circle(screen, self.color,\
-                (int(self.x), int(self.y)), self.r)
+                (int(self.x + self.player.app.scrollX), \
+                    int(self.y + self.player.app.scrollY)), self.r)
         if self.isSelected:
             pygame.draw.circle(screen, (200,0,0),\
-                (int(self.x), int(self.y)), self.r + 2, True)
+                (int(self.x + self.player.app.scrollX),\
+                     int(self.y + self.player.app.scrollY)), self.r + 2, True)
         self.drawHealthBar(screen)
 
 class Building(object):
@@ -144,8 +147,7 @@ class Building(object):
         (self.x, self.y) = (x, y)
         self.rect = pygame.Rect(x - self.size / 2 , y - self.size / 2, self.size, self.size)
         self.level = 0
-        self.timeForOne = 20
-        self.isProducing = [ ]
+        self.isProducing = dict()
         self.isSelected = False
         self.player = player
         self.color = (255, 0, 0)
@@ -155,21 +157,29 @@ class Building(object):
         i = len(self.isProducing)
         if i >= 4: 
             return
-        newCell = Cell(self.player, \
-            self.x - .8 * self.size + i * self.size/2, self.y + .8 * self.size)
-        
-        while newCell.checkCollision():
-            i += 1
-            newCell = Cell(self.player, \
-            self.x - .8 * self.size + i * self.size / 2, self.y + .8 * self.size)
-            if i > 4: 
-                #print('can\'t produce')
-                return
-        self.isProducing.append(newCell)
-        self.player.cells.append(newCell)
+
+        startTime = pygame.time.get_ticks()
+
+        self.isProducing[startTime] = i
 
     def productionProgress(self):
-        pass # start from this next time
+        nowtime = pygame.time.get_ticks()
+
+        for entry in self.isProducing:
+            
+            if nowtime - entry >= 2000:
+                i = self.isProducing[entry]
+                newCell = Cell(self.player, self.x - .8 * self.size + i * self.size/2,\
+                     self.y + .8 * self.size)
+                self.isProducing.pop(entry)
+
+                while newCell.checkCollision() or newCell in self.player.cells:
+                    i += 1
+                    newCell = Cell(self.player, self.x - .8 * self.size + i * self.size / 2,\
+                        self.y + .8 * self.size)
+
+                self.player.cells.append(newCell)
+                break
 
     def checkSelection(self, selection):
         if isinstance(selection, tuple):
@@ -180,11 +190,16 @@ class Building(object):
             else: self.isSelected = False
     
     def draw(self, screen):
-        pygame.draw.rect(screen, (self.color), self.rect)
+        temp_rect = self.rect.copy()
+        temp_rect.move_ip(self.player.app.scrollX, self.player.app.scrollY)
+        pygame.draw.rect(screen, (self.color), temp_rect)
         if self.isSelected:
-            pygame.draw.rect(screen, (0,0,0), self.rect, True)
+            pygame.draw.rect(screen, (0,0,0), temp_rect, True)
+
+
 class Resource(object):
     pass
+
 
 class Player(object):
     def __init__(self, app):
@@ -194,6 +209,7 @@ class Player(object):
                         Cell(self, self.app.width / 3, self.app.height / 3), 
                         Cell(self, self.app.width * .6, self.app.height * .6)]
         self.buildings = [ ]
+        self.score = 0
 
     def build(self, x, y):
         newBuilding = Building(x, y, self)
@@ -218,6 +234,10 @@ class Player(object):
         for cell in self.cells:
             if cell.attackTarget != None:
                 cell.attack()
+    
+    def production(self):
+        for building in self.buildings:
+            building.productionProgress()
 
     # when knowing the 2 obj collide
     # obj1 is the one u trying to move

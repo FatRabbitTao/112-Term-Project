@@ -15,7 +15,6 @@ class Virus(object):
         self.barWidth = self.r * 2 / self.health
         self.movingDir = (0, 0)
         self.birth_time = pygame.time.get_ticks()
-        #self.attackTarget = None
 
     def __eq__(self, other):
         return type(self) == type(other) \
@@ -40,6 +39,7 @@ class Virus(object):
         #print('virus ouch')
         if self.health <= 0:
             self.AI.viruses.remove(self)
+            self.AI.app.player.score += 1
             #print('virus died')
 
     def drawHealthBar(self,screen):    
@@ -49,12 +49,14 @@ class Virus(object):
         start_y = self.y - self.r - height
 
         for i in range(self.health):
-            tempRect = pygame.Rect(start_x + i * self.barWidth, start_y, self.barWidth, height)
+            tempRect = pygame.Rect(start_x + i * self.barWidth + self.AI.app.scrollX,\
+                 start_y + self.AI.app.scrollY, self.barWidth, height)
             pygame.draw.rect(screen, (255,0,0), tempRect, 1)
 
     def draw(self, screen):
         pygame.draw.circle(screen, self.color,\
-                (int(self.x), int(self.y)), self.r)
+                (int(self.x + self.AI.app.scrollX), \
+                    int(self.y + self.AI.app.scrollY)), self.r)
         self.drawHealthBar(screen)
 
 class AI(object):
