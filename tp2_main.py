@@ -1,7 +1,7 @@
 import pygame, math, random, copy, time
 
-from tp1_player import *
-from tp1_attacker import *
+from tp2_player import *
+from tp2_attacker import *
 
 #edited from http://blog.lukasperaza.com/getting-started-with-pygame/
 class PygameGame(object):
@@ -71,11 +71,23 @@ class PygameGame(object):
     def setAttackStatus(self, coords):
         for cell in self.player.cells:
             if cell.isSelected:
+                if cell.isFarming: cell.isFarming = False
                 cell.attackTarget = coords
                 cell.setAttackStatus()
 
+    def setFarmStatus(self,coords):
+        if self.player.resourceBase.rect.collidepoint(coords):
+            print('yee')
+            for cell in self.player.cells:
+                if cell.isSelected:
+                    cell.isFarming = True
+                    cell.destination = (self.player.resourceBase.x, \
+                        self.player.resourceBase.y)
+                    cell.farm()
+
     def rightClick(self, coords):
         for cell in self.player.cells:
+            if cell.isFarming: cell.isFarming = False
             cell.setMoveStatus(coords)
             
     def keyPressed(self, key):
@@ -125,6 +137,11 @@ class PygameGame(object):
                     pygame.mouse.get_pressed()[0]:
                     x, y = pygame.mouse.get_pos()
                     self.setAttackStatus((x - self.scrollX, y - self.scrollY))
+                # farm
+                elif pygame.key.get_pressed()[pygame.K_f] and \
+                    pygame.mouse.get_pressed()[0]:
+                    x, y = pygame.mouse.get_pos()
+                    self.setFarmStatus((x - self.scrollX, y - self.scrollY))
                 # normal
                 elif pygame.mouse.get_pressed()[0]:
                     x, y = pygame.mouse.get_pos()
@@ -154,7 +171,6 @@ class PygameGame(object):
                             dy = sign * 3
                     
                         self.makeVisible(dx, dy)
-                        print(dx, dy)
                         pygame.mouse.set_pos(x, y)
                 ###########################################################
                 ################# KEY STUFF ###############################
@@ -169,7 +185,7 @@ class PygameGame(object):
             #####################################################
             ################### Drawings ########################
             #fill background colors of surfaces
-            screen.fill((255, 255, 242))
+            screen.fill((255, 255, 179))
 
             # draw everything
             self.player.draw(screen)

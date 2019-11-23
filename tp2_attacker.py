@@ -5,7 +5,7 @@ class Virus(object):
         self.AI = AI
         self.x, self.y = x, y
         # green
-        self.color = (0,255,0)
+        self.color = (0,153,0)
         self.r = 10
         self.velocity = 3
         self.isMoving = False

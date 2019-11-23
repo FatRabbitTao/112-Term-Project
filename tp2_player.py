@@ -5,10 +5,11 @@ class Cell(object):
         self.player = player
         self.x, self.y = x, y
         self.isSelected = False
-        self.color = (255, 165, 0)
+        self.color = (255, 25, 102)
         self.r = 10
         self.velocity = 2
         self.isMoving = False
+        self.isFarming = False
         self.rect = pygame.Rect(self.x - self.r, self.y - self.r, self.r*2, self.r*2)
         self.movingDir = (0, 0)
 
@@ -31,11 +32,13 @@ class Cell(object):
                 if (abs(self.x - x) < 2 and abs(self.y - y) < 2):
                     # if reached, stop moving
                     self.isMoving = False
+                    print('reached')
 
                 # if for weird reason overshot # may not be necessary
                 elif dx != 0 and dy != 0 and \
                     ((x - self.x) * dx < 0 or (y - self.y) * dy < 0):
                     self.isMoving = False # overshot
+                    print('overshot')
 
                 else:
                     self.x, self.y = self.x + dx, self.y + dy
@@ -61,6 +64,31 @@ class Cell(object):
                     self.isMoving = False
                 return True
         return False
+
+    def farm(self):
+        if self.isFarming:
+            if self.destination == (self.player.resourceBase.x, self.player.resourceBase.y):
+                # move towards there
+                self.setMovingDirection()
+                self.isMoving = True
+                #print('farming...')
+            # if reaching 1 of them
+                if (self.x - self.player.resourceBase.x)**2 + \
+                    (self.y - self.player.resourceBase.y)**2 <= (self.r + self.player.resourceBase.r)**2 + 500:
+                    print('reached resource pool')
+                    self.destination = (self.player.base.x, self.player.base.y)
+                    self.setMovingDirection()
+                    self.isMoving = True
+                # change move direction
+            elif self.destination == (self.player.base.x, self.player.base.y) and \
+                (self.x - self.player.base.x)**2 + \
+                (self.y - self.player.base.y)**2 <= (self.r + self.player.base.size/2)**2 + 500:
+                print('yay reached home sweet home')
+                # change move direction
+                self.destination = (self.player.resourceBase.x, self.player.resourceBase.y)
+                self.setMovingDirection()
+                self.player.resource += 5
+                self.isMoving = True
             
     def setAttackStatus(self):
         #if self.attackTarget == None: return 
@@ -136,9 +164,9 @@ class Cell(object):
                 (int(self.x + self.player.app.scrollX), \
                     int(self.y + self.player.app.scrollY)), self.r)
         if self.isSelected:
-            pygame.draw.circle(screen, (200,0,0),\
+            pygame.draw.circle(screen, (100,0,0),\
                 (int(self.x + self.player.app.scrollX),\
-                     int(self.y + self.player.app.scrollY)), self.r + 2, True)
+                     int(self.y + self.player.app.scrollY)), self.r + 1, True)
         self.drawHealthBar(screen)
 
 class Building(object):
@@ -193,18 +221,40 @@ class Building(object):
         if self.isSelected:
             pygame.draw.rect(screen, (0,0,0), temp_rect, True)
 
-class Base(object):
-    def __init__(self,player):
-        self.player = player
+# base is a special kind of building
+class Base(Building):
+    def __init__(self, player):
+        super().__init__(50, 550, player)
+        self.color = (230, 153, 0)
         self.size = 50
-        self.position = 0
+        self.rect = pygame.Rect(self.x - self.size / 2 , self.y - self.size / 2, self.size, self.size)
+
+    def upgrade(self):
+        self.level += 1
 
 class Resource(object):
     def __init__(self, player):
-        pass
+        self.player = player
+        self.x, self.y = self.player.base.x, self.player.base.y - 300
+        self.color = (0, 230, 230)
+        self.r = 20
+        self.rect = pygame.Rect(self.x - self.r , self.y - self.r, self.r * 2, self.r*2)
+        self.isSelected = False
+        self.isMoving = False
 
+    def productionProgress(self):pass
+    def checkSelection(self,coords):
+        pass
     def getFarmed(self):
         pass
+
+    def draw(self,screen):
+        pygame.draw.circle(screen, self.color,\
+                (int(self.x + self.player.app.scrollX), \
+                    int(self.y + self.player.app.scrollY)), self.r)
+        pygame.draw.circle(screen, (0,77,64),\
+            (int(self.x + self.player.app.scrollX),\
+                    int(self.y + self.player.app.scrollY)), self.r + 1, True)
 
 
 class Player(object):
@@ -214,9 +264,13 @@ class Player(object):
         self.cells = [Cell(self, self.app.width / 2, self.app.height / 2), 
                         Cell(self, self.app.width / 3, self.app.height / 3), 
                         Cell(self, self.app.width * .6, self.app.height * .6)]
-        self.buildings = [ ]
+        
+        self.base = Base(self)
+        self.resourceBase = Resource(self)
+        self.buildings = [self.base, self.resourceBase]
         self.score = 0
-        self.resource = Resource(self)
+        self.resourceBase = Resource(self)
+        self.resource = 0
 
     def build(self, x, y):
         newBuilding = Building(x, y, self)
@@ -234,6 +288,7 @@ class Player(object):
     # under timerFired
     def moveCells(self): # mainly check for collision
         for cell in self.cells:
+            cell.farm()
             if cell.isMoving:   
                 cell.move()
 
@@ -263,8 +318,8 @@ class Player(object):
         dx,dy = obj1.movingDir
 
         # prevent jerking
-        if abs(dy * xdiff - dx * ydiff) <= 2:
-            obj1.isMoving = False
+        #if abs(dy * xdiff - dx * ydiff) <= 1:
+        #   obj1.isMoving = False
         #print(dx, dy, xdiff, ydiff)
 
         obj1.x = x0 - xdiff / 2
@@ -285,3 +340,13 @@ class Player(object):
         # draw buildings
         for building in self.buildings:
             building.draw(screen)
+        # draw score
+        font = pygame.font.SysFont("comicsansms", 24)
+        surf1 = font.render(f'score: {self.score}', True, (0,0,0))
+        surf2 = font.render(f'resource: {self.resource}', True, (0,0,0))
+        score_rect = pygame.Rect(2,2, 100, 20)
+        resource_rect = pygame.Rect(2, 20, 120, 20)
+        screen.blit(surf1, score_rect)
+        screen.blit(surf2, resource_rect)
+        
+        
