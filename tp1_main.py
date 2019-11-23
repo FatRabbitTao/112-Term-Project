@@ -19,6 +19,9 @@ class PygameGame(object):
         self.rects = [ ]
         self.scrollX, self.scrollY = 0, 0
 
+        # assume starting at bottom left
+        self.x0, self.y0 = 0, 600
+
         ### there shld be a way to store all the rects / objects
         ## To - do
         

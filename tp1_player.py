@@ -157,16 +157,13 @@ class Building(object):
         i = len(self.isProducing)
         if i >= 4: 
             return
-
         startTime = pygame.time.get_ticks()
-
         self.isProducing[startTime] = i
 
     def productionProgress(self):
         nowtime = pygame.time.get_ticks()
 
-        for entry in self.isProducing:
-            
+        for entry in self.isProducing:       
             if nowtime - entry >= 2000:
                 i = self.isProducing[entry]
                 newCell = Cell(self.player, self.x - .8 * self.size + i * self.size/2,\
@@ -196,9 +193,18 @@ class Building(object):
         if self.isSelected:
             pygame.draw.rect(screen, (0,0,0), temp_rect, True)
 
+class Base(object):
+    def __init__(self,player):
+        self.player = player
+        self.size = 50
+        self.position = 0
 
 class Resource(object):
-    pass
+    def __init__(self, player):
+        pass
+
+    def getFarmed(self):
+        pass
 
 
 class Player(object):
@@ -210,6 +216,7 @@ class Player(object):
                         Cell(self, self.app.width * .6, self.app.height * .6)]
         self.buildings = [ ]
         self.score = 0
+        self.resource = Resource(self)
 
     def build(self, x, y):
         newBuilding = Building(x, y, self)
