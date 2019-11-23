@@ -77,7 +77,6 @@ class PygameGame(object):
 
     def setFarmStatus(self,coords):
         if self.player.resourceBase.rect.collidepoint(coords):
-            print('yee')
             for cell in self.player.cells:
                 if cell.isSelected:
                     cell.isFarming = True

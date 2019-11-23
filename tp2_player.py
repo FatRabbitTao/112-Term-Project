@@ -74,7 +74,7 @@ class Cell(object):
                 #print('farming...')
             # if reaching 1 of them
                 if (self.x - self.player.resourceBase.x)**2 + \
-                    (self.y - self.player.resourceBase.y)**2 <= (self.r + self.player.resourceBase.r)**2 + 500:
+                    (self.y - self.player.resourceBase.y)**2 <= (self.r + self.player.resourceBase.r)**2 + 600:
                     print('reached resource pool')
                     self.destination = (self.player.base.x, self.player.base.y)
                     self.setMovingDirection()
