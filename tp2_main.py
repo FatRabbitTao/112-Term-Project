@@ -34,8 +34,10 @@ class PygameGame(object):
     def timerFired(self, dt):
         self.player.moveCells()
         self.player.attack()
+        self.player.farm()
         self.player.production()
         self.AI.attack()
+        self.AI.spawn()
 
     def mouseDrag(self, event_x, event_y):
         if not self.isDraggingMouse:
@@ -80,14 +82,21 @@ class PygameGame(object):
             for cell in self.player.cells:
                 if cell.isSelected:
                     cell.isFarming = True
-                    cell.destination = (self.player.resourceBase.x, \
+                    cell.destination = (self.player.resourceBase.x - 5,\
                         self.player.resourceBase.y)
+                    self.player.farmingCells.append(cell)
                     cell.farm()
+        while len(self.player.farmingCells) > 4:
+            oldCell = self.player.farmingCells.pop(0)
+            oldCell.isFarming = False
 
     def rightClick(self, coords):
         for cell in self.player.cells:
-            if cell.isFarming: cell.isFarming = False
-            cell.setMoveStatus(coords)
+            if cell.isSelected:
+                if cell.isFarming: 
+                    cell.isFarming = False
+                    self.player.farmingCells.remove(cell)
+                cell.setMoveStatus(coords)
             
     def keyPressed(self, key):
         if key == pygame.K_s:
@@ -98,7 +107,8 @@ class PygameGame(object):
             for building in self.player.buildings:
                 if building.isSelected:
                     building.produce()
-
+        if key == pygame.K_u:
+            self.player.base.upgrade()
 ###########################################################################
     def redrawAll(self, screen): pass
 
@@ -184,7 +194,7 @@ class PygameGame(object):
             #####################################################
             ################### Drawings ########################
             #fill background colors of surfaces
-            screen.fill((255, 255, 179))
+            screen.fill(pygame.Color('#fff59d')) #(255, 255, 179)
 
             # draw everything
             self.player.draw(screen)
@@ -197,7 +207,7 @@ class PygameGame(object):
                 pygame.draw.rect(screen, (0,0,0),temp_rect,True)
                 self.selectionBox = None
 
-            self.redrawAll(screen)
+            #self.redrawAll(screen)
             pygame.display.flip()
 
         pygame.quit()

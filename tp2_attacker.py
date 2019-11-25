@@ -5,7 +5,7 @@ class Virus(object):
         self.AI = AI
         self.x, self.y = x, y
         # green
-        self.color = (0,153,0)
+        self.color = pygame.Color('#64dd17')
         self.r = 10
         self.velocity = 3
         self.isMoving = False
@@ -42,6 +42,29 @@ class Virus(object):
             self.AI.app.player.score += 1
             #print('virus died')
 
+    def checkCollision(self):
+        temp = self.AI.app.player.cells + self.AI.app.player.buildings + \
+            self.AI.viruses + self.AI.killedCells
+        for obj in temp:
+            # skip if they are actually the same cell
+            if self == obj:
+                continue
+            _rect = obj.rect
+            
+            if self.rect.colliderect(_rect): # if the 2 cells touched
+                # if not yet moving
+                if not self.isMoving: return True
+                #print('oops','self:',self.rect,'other:',_rect)
+                '''
+                self.player.collide(self, obj)
+                (x,y) = self.destination
+                if abs(self.x - x) < 5 * self.r and abs(self.y - y) < 5 * self.r:
+                    self.isMoving = False
+                    print('collision_stop')
+                    print(len(self.player.farmingCells))'''
+                return True
+        return False
+
     def drawHealthBar(self,screen):    
         height = self.r / 5
 
@@ -57,6 +80,9 @@ class Virus(object):
         pygame.draw.circle(screen, self.color,\
                 (int(self.x + self.AI.app.scrollX), \
                     int(self.y + self.AI.app.scrollY)), self.r)
+        pygame.draw.circle(screen, pygame.Color('#1b5e20'),\
+                (int(self.x + self.AI.app.scrollX), \
+                    int(self.y + self.AI.app.scrollY)), self.r + 1, 1)
         self.drawHealthBar(screen)
 
 class AI(object):
@@ -65,11 +91,18 @@ class AI(object):
         self.viruses = [ ]
         self.initialNumOfVirus = 3
         self.initializeViruses()
+        self.killedCells = [ ]
+        self.productionProgress = dict()
 
     def initializeViruses(self):
         for i in range(self.initialNumOfVirus):
             newVirus = Virus(self, self.app.width*.8, self.app.height*(4+i)/16)
             self.viruses.append(newVirus)
+
+    def spawn(self):
+        for i in range(len(self.killedCells) - 1, -1, -1):
+            cell = self.killedCells[i]
+            cell.spawnVirus()
 
     def attack(self):
         for virus in self.viruses:
@@ -78,4 +111,6 @@ class AI(object):
     def draw(self,screen):
         for virus in self.viruses:
             virus.draw(screen)
+        for cell in self.killedCells:
+            cell.draw(screen)
         

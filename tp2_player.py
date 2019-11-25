@@ -1,11 +1,12 @@
 import pygame, math, random, copy, time
+from tp2_attacker import *
 
 class Cell(object):
     def __init__(self, player, x, y):
         self.player = player
         self.x, self.y = x, y
         self.isSelected = False
-        self.color = (255, 25, 102)
+        self.color = pygame.Color('#ff5252')
         self.r = 10
         self.velocity = 2
         self.isMoving = False
@@ -13,7 +14,7 @@ class Cell(object):
         self.rect = pygame.Rect(self.x - self.r, self.y - self.r, self.r*2, self.r*2)
         self.movingDir = (0, 0)
 
-        self.health = 12
+        self.health = 11
         self.barWidth = 2
 
         self.attackTarget = None
@@ -23,13 +24,16 @@ class Cell(object):
         return type(self) == type(other) \
             and (abs(self.x - other.x) < 2 and abs(self.y - other.y) < 2)
 
+    def __hash__(self):
+        return hash((self.x, self.y, self.r))
+
     def move(self):
         if self.isMoving:   
             for _ in range(self.velocity):
                 (dx, dy) = self.setMovingDirection()
                 (x, y) = self.destination
 
-                if (abs(self.x - x) < 2 and abs(self.y - y) < 2):
+                if (abs(self.x - x) < 1 and abs(self.y - y) < 1):
                     # if reached, stop moving
                     self.isMoving = False
                     print('reached')
@@ -46,7 +50,8 @@ class Cell(object):
                     self.checkCollision()
 
     def checkCollision(self):
-        temp = self.player.cells + self.player.buildings + self.player.app.AI.viruses
+        temp = self.player.cells + self.player.buildings + \
+            self.player.app.AI.viruses + self.player.app.AI.killedCells
         for obj in temp:
             # skip if they are actually the same cell
             if self == obj:
@@ -62,12 +67,14 @@ class Cell(object):
                 (x,y) = self.destination
                 if abs(self.x - x) < 5 * self.r and abs(self.y - y) < 5 * self.r:
                     self.isMoving = False
+                    print('collision_stop')
+                    print(len(self.player.farmingCells))
                 return True
         return False
 
     def farm(self):
         if self.isFarming:
-            if self.destination == (self.player.resourceBase.x, self.player.resourceBase.y):
+            if self.destination == (self.player.resourceBase.x - 5, self.player.resourceBase.y):
                 # move towards there
                 self.setMovingDirection()
                 self.isMoving = True
@@ -76,19 +83,27 @@ class Cell(object):
                 if (self.x - self.player.resourceBase.x)**2 + \
                     (self.y - self.player.resourceBase.y)**2 <= (self.r + self.player.resourceBase.r)**2 + 600:
                     print('reached resource pool')
-                    self.destination = (self.player.base.x, self.player.base.y)
+                    self.x += 10
+                    self.destination = (self.player.base.x + 5, self.player.base.y)
                     self.setMovingDirection()
                     self.isMoving = True
+
                 # change move direction
-            elif self.destination == (self.player.base.x, self.player.base.y) and \
-                (self.x - self.player.base.x)**2 + \
-                (self.y - self.player.base.y)**2 <= (self.r + self.player.base.size/2)**2 + 500:
-                print('yay reached home sweet home')
-                # change move direction
-                self.destination = (self.player.resourceBase.x, self.player.resourceBase.y)
+            elif self.destination == (self.player.base.x + 5, self.player.base.y):
                 self.setMovingDirection()
-                self.player.resource += 5
                 self.isMoving = True
+                if (self.x - self.player.base.x)**2 + \
+                    (self.y - self.player.base.y)**2 <= (self.r + self.player.base.size/2)**2 + 500:
+                    print('yay reached home sweet home')
+                    # change move direction
+                    self.x -= 10
+                    self.destination = (self.player.resourceBase.x - 5, self.player.resourceBase.y)
+                    self.setMovingDirection()
+                    self.player.resource += 3
+                    self.isMoving = True
+
+            else:
+                self.destination = (self.player.resourceBase.x - 5, self.player.resourceBase.y)
             
     def setAttackStatus(self):
         #if self.attackTarget == None: return 
@@ -118,7 +133,42 @@ class Cell(object):
         print('ouch')
         if self.health <= 0:
             print('rip')
+            self.color = pygame.Color('#9575cd')#(153, 102, 255)
+            self.noOfNewVirus = 3
+            self.deathTime = pygame.time.get_ticks()
+            self.player.app.AI.killedCells.append(self)
             self.player.cells.remove(self)
+            if self.isFarming: 
+                self.player.farmingCells.remove(self)
+
+    def spawnVirus(self):
+        if self.noOfNewVirus == 0:
+            self.player.app.AI.killedCells.remove(self)
+        else:
+            nowTime = pygame.time.get_ticks()
+            if nowTime - self.deathTime > 2000:
+                loc = self.checkAvailableLocations()
+                if loc != None:
+                    (x, y) = loc
+                    newVirus = Virus(self.player.app.AI, x, y)
+                    self.player.app.AI.viruses.append(newVirus)
+                    self.noOfNewVirus -= 1
+                    print('yay new virus', self.noOfNewVirus)
+                    self.deathTime = nowTime 
+    
+    # just for spawning viruses
+    def checkAvailableLocations(self):
+        start = random.randint(1 ,6)
+        angle = math.pi / 6
+        temp = self.player.cells + self.player.buildings + self.player.app.AI.viruses
+
+        for i in range(start, start + 12):
+            x = self.x + math.cos(angle * i) * self.r * 2
+            y = self.y + math.sin(angle * i) * self.r * 2
+            temp_virus = Cell(self.player, x, y)
+            if not temp_virus.checkCollision():
+                return (x, y)
+        return None
 
     def setMoveStatus(self,coords):
         if self.isSelected:
@@ -164,7 +214,7 @@ class Cell(object):
                 (int(self.x + self.player.app.scrollX), \
                     int(self.y + self.player.app.scrollY)), self.r)
         if self.isSelected:
-            pygame.draw.circle(screen, (100,0,0),\
+            pygame.draw.circle(screen, pygame.Color('#905548'),\
                 (int(self.x + self.player.app.scrollX),\
                      int(self.y + self.player.app.scrollY)), self.r + 1, True)
         self.drawHealthBar(screen)
@@ -180,17 +230,21 @@ class Building(object):
         self.player = player
         self.color = (255, 0, 0)
         self.isMoving = False
+        self.health = 100
+        self.barWidth = 1
     
     def produce(self):
-        i = len(self.isProducing)
-        if i >= 4: 
-            return
-        startTime = pygame.time.get_ticks()
-        self.isProducing[startTime] = i
+        producingCost = 5
+        if self.player.resource >= producingCost:
+            self.player.resource -= producingCost
+            i = len(self.isProducing)
+            if i >= 4: 
+                return
+            startTime = pygame.time.get_ticks()
+            self.isProducing[startTime] = i
 
     def productionProgress(self):
         nowtime = pygame.time.get_ticks()
-
         for entry in self.isProducing:       
             if nowtime - entry >= 2000:
                 i = self.isProducing[entry]
@@ -213,6 +267,17 @@ class Building(object):
                 self.y - self.size/2 <= event_y <= self.y + self.size/2:
                 self.isSelected = True
             else: self.isSelected = False
+
+    def drawHealthBar(self,screen):    
+        height = self.size / 10
+        start_x = self.x - self.size / 2
+        start_y = self.y - self.size / 2 - height * 2
+
+        for i in range(self.health):
+            tempRect = pygame.Rect(start_x + i * self.size / self.health * self.barWidth \
+                + self.player.app.scrollX,\
+                 start_y + self.player.app.scrollY, self.barWidth, height)
+            pygame.draw.rect(screen, (255,0,0), tempRect, 1)
     
     def draw(self, screen):
         temp_rect = self.rect.copy()
@@ -220,23 +285,38 @@ class Building(object):
         pygame.draw.rect(screen, (self.color), temp_rect)
         if self.isSelected:
             pygame.draw.rect(screen, (0,0,0), temp_rect, True)
+        self.drawHealthBar(screen)
 
 # base is a special kind of building
 class Base(Building):
     def __init__(self, player):
         super().__init__(50, 550, player)
-        self.color = (230, 153, 0)
+        self.color = pygame.Color('#f9a825')
         self.size = 50
         self.rect = pygame.Rect(self.x - self.size / 2 , self.y - self.size / 2, self.size, self.size)
 
     def upgrade(self):
-        self.level += 1
+        buildingCost = 100
+        if self.isSelected and self.player.resource >= buildingCost:
+            self.level += 1
+            self.player.resource -= buildingCost
+
+    def produce(self): pass
+
+    def draw(self, screen):
+        temp_rect = self.rect.copy()
+        temp_rect.move_ip(self.player.app.scrollX, self.player.app.scrollY)
+        pygame.draw.rect(screen, (self.color), temp_rect)
+        if self.isSelected:
+            pygame.draw.rect(screen, (0,0,0), temp_rect, True)
+        if self.health < 100:
+            self.drawHealthBar(screen)
 
 class Resource(object):
     def __init__(self, player):
         self.player = player
         self.x, self.y = self.player.base.x, self.player.base.y - 300
-        self.color = (0, 230, 230)
+        self.color = pygame.Color('#29b6f6')
         self.r = 20
         self.rect = pygame.Rect(self.x - self.r , self.y - self.r, self.r * 2, self.r*2)
         self.isSelected = False
@@ -264,21 +344,24 @@ class Player(object):
         self.cells = [Cell(self, self.app.width / 2, self.app.height / 2), 
                         Cell(self, self.app.width / 3, self.app.height / 3), 
                         Cell(self, self.app.width * .6, self.app.height * .6)]
-        
         self.base = Base(self)
         self.resourceBase = Resource(self)
         self.buildings = [self.base, self.resourceBase]
         self.score = 0
         self.resourceBase = Resource(self)
         self.resource = 0
+        self.farmingCells = [ ]
 
     def build(self, x, y):
-        newBuilding = Building(x, y, self)
-        if not self.checkIfOccupied(newBuilding):
-            self.buildings.append(newBuilding)
+        buildingCost = 20
+        if self.resource >= buildingCost:
+            newBuilding = Building(x, y, self)
+            if not self.checkIfOccupied(newBuilding):
+                self.buildings.append(newBuilding)
+                self.resource -= buildingCost
 
     def checkIfOccupied(self, newObj):
-        temp = self.cells + self.buildings
+        temp = self.cells + self.buildings + self.app.AI.viruses + self.app.AI.killedCells
         for obj in temp:
             _rect = obj.rect
             if newObj.rect.colliderect(_rect): # if the 2 cells touched
@@ -288,9 +371,11 @@ class Player(object):
     # under timerFired
     def moveCells(self): # mainly check for collision
         for cell in self.cells:
-            cell.farm()
             if cell.isMoving:   
                 cell.move()
+    def farm(self):
+        for cell in self.farmingCells:
+            cell.farm()
 
     def attack(self):
         for cell in self.cells:
@@ -344,9 +429,12 @@ class Player(object):
         font = pygame.font.SysFont("comicsansms", 24)
         surf1 = font.render(f'score: {self.score}', True, (0,0,0))
         surf2 = font.render(f'resource: {self.resource}', True, (0,0,0))
+        surf3 = font.render(f'base level: {self.base.level}', True, (0,0,0))
         score_rect = pygame.Rect(2,2, 100, 20)
         resource_rect = pygame.Rect(2, 20, 120, 20)
+        level_rect = pygame.Rect(2, 38, 140, 20)
         screen.blit(surf1, score_rect)
         screen.blit(surf2, resource_rect)
+        screen.blit(surf3, level_rect)
         
         
