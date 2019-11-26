@@ -1,4 +1,4 @@
-import pygame, math, random, copy, time
+import pygame, math, random, copy, time, wave
 
 from tp2_player import *
 from tp2_attacker import *
@@ -18,26 +18,40 @@ class PygameGame(object):
         self.all_objects = [ ]
         self.rects = [ ]
         self.scrollX, self.scrollY = 0, 0
+        self.gameOver = False
 
         # assume starting at bottom left
         self.x0, self.y0 = 0, 600
 
         ### there shld be a way to store all the rects / objects
         ## To - do
+        self._keys = dict()
+        self.isDraggingMouse = False
+        self.selectionBox = None
         
         self.player = Player(self)
         self.AI = AI(self)
+        self.loadMusic()
+
+    def loadMusic(self):
+        pygame.mixer.init(55000)
+        pygame.mixer.music.load('music.mp3')
+        pygame.mixer.music.play(- 1)
 
         pygame.init()
 #####################################################################
 ################ Controllers ########################################
     def timerFired(self, dt):
-        self.player.moveCells()
-        self.player.attack()
-        self.player.farm()
-        self.player.production()
-        self.AI.attack()
-        self.AI.spawn()
+        if not self.gameOver:
+            self.player.moveCells()
+            self.player.attack()
+            self.player.farm()
+            self.player.production()
+            self.AI.attack()
+            self.AI.spawn()
+            if len(self.player.buildings) == 1: # only have the resource pool left
+                self.gameOver = True
+                print('You lost')
 
     def mouseDrag(self, event_x, event_y):
         if not self.isDraggingMouse:
@@ -80,7 +94,7 @@ class PygameGame(object):
     def setFarmStatus(self,coords):
         if self.player.resourceBase.rect.collidepoint(coords):
             for cell in self.player.cells:
-                if cell.isSelected:
+                if cell.isSelected and (not cell.isFarming):
                     cell.isFarming = True
                     cell.destination = (self.player.resourceBase.x - 5,\
                         self.player.resourceBase.y)
@@ -115,16 +129,15 @@ class PygameGame(object):
     def run(self):
         clock = pygame.time.Clock()
         screen = pygame.display.set_mode((self.width, self.height))
-        self._keys = dict()
-        self.isDraggingMouse = False
-        self.selectionBox = None
 
         pygame.display.set_caption(self.title)
 
         playing = True
         while playing:
             time = clock.tick(self.fps)
-            self.timerFired(time)            
+            self.timerFired(time)       
+            # music: Diana Boncheva feat. BanYa - Beethoven Virus Full Version 
+            # from https://www.youtube.com/watch?v=DtKCNJmARF0
             ################## Events ###########################
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -197,8 +210,8 @@ class PygameGame(object):
             screen.fill(pygame.Color('#fff59d')) #(255, 255, 179)
 
             # draw everything
-            self.player.draw(screen)
             self.AI.draw(screen)
+            self.player.draw(screen)
             
             # draw selection box
             if self.selectionBox != None:

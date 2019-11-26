@@ -46,7 +46,7 @@ class Cell(object):
 
                 else:
                     self.x, self.y = self.x + dx, self.y + dy
-                    self.rect = pygame.Rect(self.x - self.r, self.y - self.r, self.r*2, self.r *2)
+                    self.rect = pygame.Rect(self.x - self.r, self.y - self.r, self.r * 2, self.r * 2)
                     self.checkCollision()
 
     def checkCollision(self):
@@ -68,7 +68,6 @@ class Cell(object):
                 if abs(self.x - x) < 5 * self.r and abs(self.y - y) < 5 * self.r:
                     self.isMoving = False
                     print('collision_stop')
-                    print(len(self.player.farmingCells))
                 return True
         return False
 
@@ -146,11 +145,11 @@ class Cell(object):
             self.player.app.AI.killedCells.remove(self)
         else:
             nowTime = pygame.time.get_ticks()
-            if nowTime - self.deathTime > 2000:
+            if nowTime - self.deathTime > 5000:
                 loc = self.checkAvailableLocations()
                 if loc != None:
                     (x, y) = loc
-                    newVirus = Virus(self.player.app.AI, x, y)
+                    newVirus = ViolentVirus(self.player.app.AI, x, y)
                     self.player.app.AI.viruses.append(newVirus)
                     self.noOfNewVirus -= 1
                     print('yay new virus', self.noOfNewVirus)
@@ -230,6 +229,7 @@ class Building(object):
         self.player = player
         self.color = (255, 0, 0)
         self.isMoving = False
+        self.originalHealth = 100
         self.health = 100
         self.barWidth = 1
     
@@ -268,13 +268,18 @@ class Building(object):
                 self.isSelected = True
             else: self.isSelected = False
 
+    def getAttacked(self):
+        self.health -= 1
+        if self.health <= 0:
+            self.player.buildings.remove(self)
+
     def drawHealthBar(self,screen):    
         height = self.size / 10
         start_x = self.x - self.size / 2
         start_y = self.y - self.size / 2 - height * 2
 
         for i in range(self.health):
-            tempRect = pygame.Rect(start_x + i * self.size / self.health * self.barWidth \
+            tempRect = pygame.Rect(start_x + i * self.size / self.originalHealth * self.barWidth \
                 + self.player.app.scrollX,\
                  start_y + self.player.app.scrollY, self.barWidth, height)
             pygame.draw.rect(screen, (255,0,0), tempRect, 1)
@@ -285,7 +290,8 @@ class Building(object):
         pygame.draw.rect(screen, (self.color), temp_rect)
         if self.isSelected:
             pygame.draw.rect(screen, (0,0,0), temp_rect, True)
-        self.drawHealthBar(screen)
+        if self.health < 100:
+            self.drawHealthBar(screen)
 
 # base is a special kind of building
 class Base(Building):
@@ -293,6 +299,7 @@ class Base(Building):
         super().__init__(50, 550, player)
         self.color = pygame.Color('#f9a825')
         self.size = 50
+        self.health = self.originalHealth = 150
         self.rect = pygame.Rect(self.x - self.size / 2 , self.y - self.size / 2, self.size, self.size)
 
     def upgrade(self):
@@ -309,7 +316,7 @@ class Base(Building):
         pygame.draw.rect(screen, (self.color), temp_rect)
         if self.isSelected:
             pygame.draw.rect(screen, (0,0,0), temp_rect, True)
-        if self.health < 100:
+        if self.health < 150:
             self.drawHealthBar(screen)
 
 class Resource(object):
@@ -322,11 +329,11 @@ class Resource(object):
         self.isSelected = False
         self.isMoving = False
 
+    # the resource is put under building but is not able to do anything
+    def produce(self):pass
     def productionProgress(self):pass
-    def checkSelection(self,coords):
-        pass
-    def getFarmed(self):
-        pass
+    def checkSelection(self,coords): pass
+    def getAttacked(self):pass
 
     def draw(self,screen):
         pygame.draw.circle(screen, self.color,\
@@ -346,7 +353,7 @@ class Player(object):
                         Cell(self, self.app.width * .6, self.app.height * .6)]
         self.base = Base(self)
         self.resourceBase = Resource(self)
-        self.buildings = [self.base, self.resourceBase]
+        self.buildings = [self.resourceBase, self.base]
         self.score = 0
         self.resourceBase = Resource(self)
         self.resource = 0
