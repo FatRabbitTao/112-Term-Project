@@ -81,7 +81,6 @@ class Cell(object):
             # if reaching 1 of them
                 if (self.x - self.player.resourceBase.x)**2 + \
                     (self.y - self.player.resourceBase.y)**2 <= (self.r + self.player.resourceBase.r)**2 + 600:
-                    print('reached resource pool')
                     self.x += 10
                     self.destination = (self.player.base.x + 5, self.player.base.y)
                     self.setMovingDirection()
@@ -93,7 +92,6 @@ class Cell(object):
                 self.isMoving = True
                 if (self.x - self.player.base.x)**2 + \
                     (self.y - self.player.base.y)**2 <= (self.r + self.player.base.size/2)**2 + 500:
-                    print('yay reached home sweet home')
                     # change move direction
                     self.x -= 10
                     self.destination = (self.player.resourceBase.x - 5, self.player.resourceBase.y)
@@ -105,27 +103,44 @@ class Cell(object):
                 self.destination = (self.player.resourceBase.x - 5, self.player.resourceBase.y)
             
     def setAttackStatus(self):
-        #if self.attackTarget == None: return 
-        (x, y) = self.attackTarget
-        if abs(self.x - x) > 5 * self.r or abs(self.y - y) > 5 * self.r:
-            #print(self.rect,'move')
-            self.isMoving = True
-            self.destination = self.attackTarget
+        if self.attackTarget != None:
+            if isinstance(self.attackTarget, Virus):
+                (x, y) = (self.attackTarget.x, self.attackTarget.y)
+                self.isMoving = True
+                self.destination = (x, y)
+            else:
+                (x, y) = self.attackTarget
+            if abs(self.x - x) > 5 * self.r or abs(self.y - y) > 5 * self.r:
+                #print(self.rect,'move')
+                self.isMoving = True
+                self.destination = (x, y)
         
     def attack(self):
         if self.attackTarget != None:
-            if self.isMoving: return
+            if isinstance(self.attackTarget, Virus):
+                (x,y) = (self.attackTarget.x, self.attackTarget.y)
+            else:(x,y) = self.attackTarget
+            if (self.x - x)**2 + (self.y - y)**2 > 5 * self.r ** 2: return
             # else
             nowTime = pygame.time.get_ticks()
             timeDiff = nowTime - self.birth_time
             if timeDiff <= 500: return
             # else:
             self.birth_time = nowTime
-            for virus in self.player.app.AI.viruses:
-                if (self.x - virus.x)**2 + (self.y - virus.y)**2 <= 20 * self.r **2:
-                    virus.getAttacked()
+            if isinstance(self.attackTarget, Virus):
+                if self.attackTarget not in self.player.app.AI.viruses:
+                    self.attackTarget = None
                     return
-            self.attackTarget = None
+
+                if (self.x - self.attackTarget.x)**2 + (self.y - self.attackTarget.y)**2 <= 20 * self.r **2:
+                    self.attackTarget.getAttacked()
+                    return
+            else:
+                for virus in self.player.app.AI.viruses:
+                    if (self.x - virus.x)**2 + (self.y - virus.y)**2 <= 20 * self.r **2:
+                        virus.getAttacked()
+                        return
+                self.attackTarget = None
 
     def getAttacked(self):
         self.health -= 1
@@ -386,6 +401,7 @@ class Player(object):
 
     def attack(self):
         for cell in self.cells:
+            cell.setAttackStatus()
             if cell.attackTarget != None:
                 cell.attack()
     

@@ -49,9 +49,15 @@ class PygameGame(object):
             self.player.production()
             self.AI.attack()
             self.AI.spawn()
-            if len(self.player.buildings) == 1: # only have the resource pool left
+            self.checkGameCondition()
+
+    def checkGameCondition(self):
+        if len(self.player.buildings) == 1: # only have the resource pool left
                 self.gameOver = True
                 print('You lost')
+        elif len(self.AI.viruses) == 0 and len(self.AI.killedCells) == 0:
+            self.gameOver = True
+            print('You won!')
 
     def mouseDrag(self, event_x, event_y):
         if not self.isDraggingMouse:
@@ -85,10 +91,17 @@ class PygameGame(object):
             building.checkSelection(coords)
 
     def setAttackStatus(self, coords):
-        for cell in self.player.cells:
+        for i in range(len(self.player.cells)-1,-1,-1):
+            cell = self.player.cells[i]
             if cell.isSelected:
-                if cell.isFarming: cell.isFarming = False
-                cell.attackTarget = coords
+                if cell.isFarming: 
+                    cell.isFarming = False
+                    self.player.farmingCells.remove(cell)
+                for virus in self.AI.viruses:
+                    if virus.rect.collidepoint(coords):
+                        cell.attackTarget = virus
+                if cell.attackTarget == None:
+                    cell.attackTarget = coords
                 cell.setAttackStatus()
 
     def setFarmStatus(self,coords):
@@ -105,7 +118,8 @@ class PygameGame(object):
             oldCell.isFarming = False
 
     def rightClick(self, coords):
-        for cell in self.player.cells:
+        for i in range(len(self.player.cells)-1, -1, -1):
+            cell = self.player.cells[i]
             if cell.isSelected:
                 if cell.isFarming: 
                     cell.isFarming = False
@@ -178,19 +192,19 @@ class PygameGame(object):
                     if (not (x <= 49 and y == 0)) and \
                         (x in [0, self.width - 1] or y in [0, self.height - 1]):
                         if x > self.width - 5 and y < 5:
-                            dx, dy = -3, 3
+                            dx, dy = -8, 8
                         elif x < 5 and y > self.height - 5:
-                            dx, dy = 3, -3
+                            dx, dy = 8, -8
                         elif x > self.width - 5 and y > self.height - 5:
-                            dx, dy = -3, -3
+                            dx, dy = -8, -8
                         elif x == 0 or x == self.width - 1:
                             dy = 0
                             sign = 1 if x == 0 else - 1
-                            dx = sign * 3
+                            dx = sign * 8
                         elif y == 0 or y == self.height - 1:
                             dx = 0
                             sign = 1 if y == 0 else - 1
-                            dy = sign * 3
+                            dy = sign * 8
                     
                         self.makeVisible(dx, dy)
                         pygame.mouse.set_pos(x, y)

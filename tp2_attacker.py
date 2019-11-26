@@ -22,6 +22,9 @@ class Virus(object):
         return type(self) == type(other) \
             and (abs(self.x - other.x) < 2 and abs(self.y - other.y) < 2)
 
+    def __repr__(self):
+        return f'Virus at ({self.x},{self.y}) position'
+
     def attack(self):
         nowTime = pygame.time.get_ticks()
         timeDiff = nowTime - self.attack_time
@@ -120,6 +123,10 @@ class ViolentVirus(Virus):
                 dx = sign * math.cos(theta)
                 dy = sign * math.sin(theta) 
 
+            elif random.random() < 0.33:
+                dx = random.random()
+                dy = random.random()
+
             else:
                 x = random.random() 
                 y = random.random() 
@@ -195,7 +202,7 @@ class AI(object):
 
     def initializeViruses(self):
         for i in range(self.initialNumOfVirus):
-            newVirus = ViolentVirus(self, self.app.width*.8, self.app.height*(i)/16)
+            newVirus = ViolentVirus(self, self.app.width*.8, 5 + self.app.height*(i)/16)
             self.viruses.append(newVirus)
 
     def spawn(self):
