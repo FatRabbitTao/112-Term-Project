@@ -109,11 +109,13 @@ class ViolentVirus(Virus):
 
     def moveInGeneralDir(self):
         nowTime = pygame.time.get_ticks()
-        if nowTime - self.move_time >= 7500:
+        if nowTime - self.move_time >= 5000:
         # decide whether going to homebase or not
-            self.isGoingHomeBase = (random.random() > 0.67)
+            self.isGoingHomeBase = (random.random() > 0.5)
+            choices = self.AI.app.player.buildings[1:]
             if self.isGoingHomeBase:
-                (x, y) = (self.AI.app.player.base.x, self.AI.app.player.base.y)
+                target = random.choice(choices)
+                (x, y) = (target.x, target.y)
                 xdiff = x - self.x
                 sign = -1 if xdiff < 0 else 1
                 ydiff = y - self.y
@@ -123,7 +125,7 @@ class ViolentVirus(Virus):
                 dx = sign * math.cos(theta)
                 dy = sign * math.sin(theta) 
 
-            elif random.random() < 0.33:
+            elif random.random() < 0.3:
                 dx = random.random()
                 dy = random.random()
 

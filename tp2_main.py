@@ -19,6 +19,8 @@ class PygameGame(object):
         self.rects = [ ]
         self.scrollX, self.scrollY = 0, 0
         self.gameOver = False
+        self.isPaused = False
+        self.inHelp = False
 
         # assume starting at bottom left
         self.x0, self.y0 = 0, 600
@@ -28,10 +30,11 @@ class PygameGame(object):
         self._keys = dict()
         self.isDraggingMouse = False
         self.selectionBox = None
-        
+        self.waitingToStart = True
         self.player = Player(self)
         self.AI = AI(self)
         self.loadMusic()
+        self.loadImage()
 
     def loadMusic(self):
         pygame.mixer.init(55000)
@@ -39,10 +42,16 @@ class PygameGame(object):
         pygame.mixer.music.play(- 1)
 
         pygame.init()
+
+    def loadImage(self):
+        startImg = pygame.image.load('startPic.png')
+        self.startImg = pygame.transform.scale(startImg, (500, 200))
+        helpImg = pygame.image.load('helpPic.png')
+        self.helpImg = pygame.transform.scale(helpImg, (500, 250))
 #####################################################################
 ################ Controllers ########################################
     def timerFired(self, dt):
-        if not self.gameOver:
+        if (not self.gameOver) and (not self.waitingToStart) and (not self.isPaused):
             self.player.moveCells()
             self.player.attack()
             self.player.farm()
@@ -53,8 +62,8 @@ class PygameGame(object):
 
     def checkGameCondition(self):
         if len(self.player.buildings) == 1: # only have the resource pool left
-                self.gameOver = True
-                print('You lost')
+            self.gameOver = True
+            print('You lost')
         elif len(self.AI.viruses) == 0 and len(self.AI.killedCells) == 0:
             self.gameOver = True
             print('You won!')
@@ -137,14 +146,32 @@ class PygameGame(object):
                     building.produce()
         if key == pygame.K_u:
             self.player.base.upgrade()
+        
+        if key == pygame.K_h:
+            self.waitingToStart = False
+            self.isPaused = True
+            self.inHelp = True
+
+        if key == pygame.K_SPACE:
+            self.isPaused = not self.isPaused
 ###########################################################################
     def redrawAll(self, screen): pass
+
+    def drawStart(self,screen):
+        if self.waitingToStart:
+            screen.blit(self.startImg, pygame.Rect(50,50,500,500))
+
+    def drawHelp(self,screen):
+        if self.inHelp:
+            screen.blit(self.helpImg, pygame.Rect(50,50,500,500) )
+
 
     def run(self):
         clock = pygame.time.Clock()
         screen = pygame.display.set_mode((self.width, self.height))
 
         pygame.display.set_caption(self.title)
+        screen.set_alpha(None)
 
         playing = True
         while playing:
@@ -212,6 +239,11 @@ class PygameGame(object):
                 ################# KEY STUFF ###############################
                 # key presses
                 if event.type == pygame.KEYDOWN:
+                    if self.waitingToStart:
+                        self.waitingToStart = False
+                    if self.inHelp:
+                        self.inHelp = False
+                        self.isPaused = False
                     self._keys[event.key] = True
                     self.keyPressed(event.key)
                     if pygame.key.get_pressed()[pygame.K_b]:
@@ -235,6 +267,8 @@ class PygameGame(object):
                 self.selectionBox = None
 
             #self.redrawAll(screen)
+            self.drawStart(screen)
+            self.drawHelp(screen)
             pygame.display.flip()
 
         pygame.quit()

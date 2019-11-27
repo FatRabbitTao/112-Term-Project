@@ -244,7 +244,7 @@ class Building(object):
         self.player = player
         self.color = (255, 0, 0)
         self.isMoving = False
-        self.originalHealth = 100
+        self.originalHealth = 80
         self.health = 100
         self.barWidth = 1
     
@@ -314,7 +314,7 @@ class Base(Building):
         super().__init__(50, 550, player)
         self.color = pygame.Color('#f9a825')
         self.size = 50
-        self.health = self.originalHealth = 150
+        self.health = self.originalHealth = 120
         self.rect = pygame.Rect(self.x - self.size / 2 , self.y - self.size / 2, self.size, self.size)
 
     def upgrade(self):
