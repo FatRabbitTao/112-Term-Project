@@ -233,6 +233,16 @@ class Cell(object):
                      int(self.y + self.player.app.scrollY)), self.r + 1, True)
         self.drawHealthBar(screen)
 
+class Macrophage(Cell):
+    def __init__(self,player,x,y):
+        super().__init__(player,x,y)
+        self.r = 15
+        self.health = 20
+        self.color = pygame.Color('#ffeb3b')
+
+    def spawnVirus(self):
+        pass
+
 class Building(object):
     def __init__(self, x, y, player):
         self.size = 40
@@ -244,7 +254,7 @@ class Building(object):
         self.player = player
         self.color = (255, 0, 0)
         self.isMoving = False
-        self.originalHealth = 80
+        self.originalHealth = 100
         self.health = 100
         self.barWidth = 1
     
@@ -308,13 +318,35 @@ class Building(object):
         if self.health < 100:
             self.drawHealthBar(screen)
 
+class ImmuneSystem(Building):
+    def __init__(self, x, y, player):
+        super().__init__(x, y, player)
+        self.color = pygame.Color('#e65100')
+
+    def productionProgress(self):
+        nowtime = pygame.time.get_ticks()
+        for entry in self.isProducing:       
+            if nowtime - entry >= 2000:
+                i = self.isProducing[entry]
+                newCell = Cell(self.player, self.x - .8 * self.size + i * self.size/2,\
+                     self.y + .8 * self.size)
+                self.isProducing.pop(entry)
+
+                while newCell.checkCollision() or newCell in self.player.cells:
+                    i += 1
+                    newCell = Macrophage(self.player, self.x - .8 * self.size + i * self.size / 2,\
+                        self.y + .8 * self.size)
+
+                self.player.cells.append(newCell)
+                break
+
 # base is a special kind of building
 class Base(Building):
     def __init__(self, player):
         super().__init__(50, 550, player)
         self.color = pygame.Color('#f9a825')
         self.size = 50
-        self.health = self.originalHealth = 120
+        self.health = self.originalHealth = 150
         self.rect = pygame.Rect(self.x - self.size / 2 , self.y - self.size / 2, self.size, self.size)
 
     def upgrade(self):
@@ -331,7 +363,7 @@ class Base(Building):
         pygame.draw.rect(screen, (self.color), temp_rect)
         if self.isSelected:
             pygame.draw.rect(screen, (0,0,0), temp_rect, True)
-        if self.health < 150:
+        if self.health < self.originalHealth:
             self.drawHealthBar(screen)
 
 class Resource(object):
@@ -378,6 +410,14 @@ class Player(object):
         buildingCost = 20
         if self.resource >= buildingCost:
             newBuilding = Building(x, y, self)
+            if not self.checkIfOccupied(newBuilding):
+                self.buildings.append(newBuilding)
+                self.resource -= buildingCost
+
+    def buildBig(self, x, y):
+        buildingCost = 40
+        if self.resource >= buildingCost:
+            newBuilding = ImmuneSystem(x, y, self)
             if not self.checkIfOccupied(newBuilding):
                 self.buildings.append(newBuilding)
                 self.resource -= buildingCost

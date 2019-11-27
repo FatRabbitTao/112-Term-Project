@@ -111,7 +111,7 @@ class ViolentVirus(Virus):
         nowTime = pygame.time.get_ticks()
         if nowTime - self.move_time >= 5000:
         # decide whether going to homebase or not
-            self.isGoingHomeBase = (random.random() > 0.5)
+            self.isGoingHomeBase = (random.random() > 0.6)
             choices = self.AI.app.player.buildings[1:]
             if self.isGoingHomeBase:
                 target = random.choice(choices)

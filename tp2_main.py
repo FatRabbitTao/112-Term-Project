@@ -249,6 +249,9 @@ class PygameGame(object):
                     if pygame.key.get_pressed()[pygame.K_b]:
                         (x,y) = pygame.mouse.get_pos()
                         self.player.build(x - self.scrollX, y - self.scrollY)
+                    if pygame.key.get_pressed()[pygame.K_m]:
+                        (x,y) = pygame.mouse.get_pos()
+                        self.player.buildBig(x - self.scrollX, y - self.scrollY)
 
             #####################################################
             ################### Drawings ########################
