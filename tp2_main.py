@@ -133,6 +133,8 @@ class PygameGame(object):
                 if cell.isFarming: 
                     cell.isFarming = False
                     self.player.farmingCells.remove(cell)
+                if cell.attackTarget != None:
+                    cell.attackTarget = None
                 cell.setMoveStatus(coords)
             
     def keyPressed(self, key):
@@ -140,6 +142,10 @@ class PygameGame(object):
             for cell in self.player.cells:
                 if cell.isSelected:
                     cell.isMoving = False
+                    cell.isFarming = False
+                    if cell in self.player.farmingCells:
+                        self.player.farmingCells.remove(cell)
+                    cell.attackTarget = None
         if key == pygame.K_c:
             for building in self.player.buildings:
                 if building.isSelected:

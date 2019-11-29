@@ -96,7 +96,7 @@ class Cell(object):
                     self.x -= 10
                     self.destination = (self.player.resourceBase.x - 5, self.player.resourceBase.y)
                     self.setMovingDirection()
-                    self.player.resource += 3
+                    self.player.resource += 5
                     self.isMoving = True
 
             else:
@@ -238,7 +238,8 @@ class Macrophage(Cell):
         super().__init__(player,x,y)
         self.r = 15
         self.health = 20
-        self.color = pygame.Color('#ffeb3b')
+        self.color = pygame.Color('#9e9e9e')
+        self.rect = pygame.Rect(self.x - self.r, self.y - self.r, self.r*2, self.r*2)
 
     def spawnVirus(self):
         pass
@@ -315,10 +316,13 @@ class Building(object):
         pygame.draw.rect(screen, (self.color), temp_rect)
         if self.isSelected:
             pygame.draw.rect(screen, (0,0,0), temp_rect, True)
-        if self.health < 100:
+        if self.health < self.originalHealth:
             self.drawHealthBar(screen)
 
 class ImmuneSystem(Building):
+    temp = pygame.image.load('house1.png')
+    image = pygame.transform.scale(temp, (40,40))
+
     def __init__(self, x, y, player):
         super().__init__(x, y, player)
         self.color = pygame.Color('#e65100')
@@ -328,7 +332,7 @@ class ImmuneSystem(Building):
         for entry in self.isProducing:       
             if nowtime - entry >= 2000:
                 i = self.isProducing[entry]
-                newCell = Cell(self.player, self.x - .8 * self.size + i * self.size/2,\
+                newCell = Macrophage(self.player, self.x - .8 * self.size + i * self.size/2,\
                      self.y + .8 * self.size)
                 self.isProducing.pop(entry)
 
@@ -339,6 +343,17 @@ class ImmuneSystem(Building):
 
                 self.player.cells.append(newCell)
                 break
+
+    def draw(self,screen):
+        temp_rect = self.rect.copy()
+        temp_rect.move_ip(self.player.app.scrollX, self.player.app.scrollY)
+        screen.blit(ImmuneSystem.image, temp_rect)
+
+        if self.isSelected:
+            pygame.draw.rect(screen, (0,0,0), temp_rect, True)
+        if self.health < self.originalHealth:
+            self.drawHealthBar(screen)
+
 
 # base is a special kind of building
 class Base(Building):

@@ -45,7 +45,7 @@ class Virus(object):
                     return
 
     def getAttacked(self):
-        self.health -= 1
+        self.health -= 2
         #print('virus ouch')
         if self.health <= 0:
             self.AI.viruses.remove(self)
