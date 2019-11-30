@@ -1,7 +1,7 @@
 import pygame, math, random, copy, time, wave
 
-from tp2_player import *
-from tp2_attacker import *
+from tp3_player import *
+from tp3_attacker import *
 
 #edited from http://blog.lukasperaza.com/getting-started-with-pygame/
 class PygameGame(object):
@@ -9,7 +9,7 @@ class PygameGame(object):
         ''' return whether a specific key is being held '''
         return self._keys.get(key, False)
 
-    def __init__(self, width=600, height=600, fps=100, title="testing..."):
+    def __init__(self, width=800, height=800, fps=100, title="testing..."):
         self.width = width
         self.height = height
         self.fps = fps
@@ -33,15 +33,16 @@ class PygameGame(object):
         self.waitingToStart = True
         self.player = Player(self)
         self.AI = AI(self)
-        self.loadMusic()
+       # self.loadMusic()
         self.loadImage()
+
+        # levels and goals (changeable)
+        self.currentGoal = 10
 
     def loadMusic(self):
         pygame.mixer.init(55000)
         pygame.mixer.music.load('music.mp3')
         pygame.mixer.music.play(- 1)
-
-        pygame.init()
 
     def loadImage(self):
         startImg = pygame.image.load('startPic.png')
@@ -50,6 +51,9 @@ class PygameGame(object):
         self.helpImg = pygame.transform.scale(helpImg, (500, 250))
 #####################################################################
 ################ Controllers ########################################
+    pygame.init()
+
+
     def timerFired(self, dt):
         if (not self.gameOver) and (not self.waitingToStart) and (not self.isPaused):
             self.player.moveCells()
@@ -64,7 +68,7 @@ class PygameGame(object):
         if len(self.player.buildings) == 1: # only have the resource pool left
             self.gameOver = True
             print('You lost')
-        elif len(self.AI.viruses) == 0 and len(self.AI.killedCells) == 0:
+        elif self.player.score >= self.currentGoal:
             self.gameOver = True
             print('You won!')
 
@@ -75,8 +79,12 @@ class PygameGame(object):
         self.createSelectionBox(event_x - self.scrollX, event_y - self.scrollY)
 
     def makeVisible(self, dx, dy):
-        self.scrollX += dx
-        self.scrollY += dy
+        minScroll = 50
+        maxScroll = -600
+        if self.scrollX + dx < minScroll and self.scrollY + dy > - minScroll and \
+            self.scrollY + dy < - maxScroll and self.scrollX + dx > maxScroll:
+            self.scrollX += dx
+            self.scrollY += dy
         #print(self.scrollX, self.scrollY)
         
     def createSelectionBox(self, event_x, event_y):
@@ -165,11 +173,15 @@ class PygameGame(object):
 
     def drawStart(self,screen):
         if self.waitingToStart:
-            screen.blit(self.startImg, pygame.Rect(50,50,500,500))
+            width = 500
+            start = self.width / 2 - width / 2
+            screen.blit(self.startImg, pygame.Rect(start,50,500,500))
 
     def drawHelp(self,screen):
         if self.inHelp:
-            screen.blit(self.helpImg, pygame.Rect(50,50,500,500) )
+            width = 500
+            start = self.width / 2 - width / 2
+            screen.blit(self.helpImg, pygame.Rect(start,50,500,500) )
 
 
     def run(self):

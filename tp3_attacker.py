@@ -1,5 +1,5 @@
 import pygame, math, random, copy, time
-from tp2_player import *
+from tp3_player import *
 
 class Virus(object):
     def __init__(self, AI, x, y):
@@ -85,19 +85,21 @@ class ViolentVirus(Virus):
                 self.moveInGeneralDir()
                 (dx, dy) = self.movingDir
                 self.x, self.y = self.x + dx, self.y + dy
-                border1 = -50
-                border2 = 600
-                if self.x < border1:
-                    self.x = border1
+                x_low_bound = 5
+                x_high_bound = 1390
+                y_low_bound = -590
+                y_high_bound = 790
+                if self.x < x_low_bound:
+                    self.x = x_low_bound
                     self.flipDir()
-                elif self.y < border1:
-                    self.y = border1
+                elif self.y < y_low_bound:
+                    self.y = y_low_bound
                     self.flipDir()
-                elif self.x > border2:
-                    self.x = border2
+                elif self.x > x_high_bound:
+                    self.x = x_high_bound
                     self.flipDir()
-                elif self.y > border2:
-                    self.y = border2
+                elif self.y > y_high_bound:
+                    self.y = y_high_bound
                     self.flipDir()
                 self.rect = pygame.Rect(self.x - self.r, self.y - self.r, self.r * 2, self.r * 2)
                 self.checkCollision()
@@ -111,7 +113,7 @@ class ViolentVirus(Virus):
         nowTime = pygame.time.get_ticks()
         if nowTime - self.move_time >= 5000:
         # decide whether going to homebase or not
-            self.isGoingHomeBase = (random.random() > 0.6)
+            self.isGoingHomeBase = (random.random() > 0.5)
             choices = self.AI.app.player.buildings[1:]
             if self.isGoingHomeBase:
                 target = random.choice(choices)
@@ -124,10 +126,6 @@ class ViolentVirus(Virus):
                 theta = math.atan(ydiff / xdiff)
                 dx = sign * math.cos(theta)
                 dy = sign * math.sin(theta) 
-
-            elif random.random() < 0.3:
-                dx = random.random()
-                dy = random.random()
 
             else:
                 x = random.random() 
@@ -143,7 +141,7 @@ class ViolentVirus(Virus):
 
     def checkCollision(self):
         temp = self.AI.app.player.cells + self.AI.app.player.buildings + \
-            self.AI.viruses + self.AI.killedCells
+            self.AI.viruses + self.AI.killedCells + [self.AI.base]
         for obj in temp:
             # skip if they are actually the same cell
             if self == obj:
@@ -192,15 +190,61 @@ class ViolentVirus(Virus):
     def escape(self):
         pass
 
+class VirusBase(object):
+    image = pygame.transform.scale(pygame.image.load('virusBase.png'), (50,50))
+    def __init__(self, AI):
+        self.x, self.y = 1300, -500
+        self.size = 50
+        self.rect = pygame.Rect(self.x - self.size / 2, self.y - self.size / 2, self.size, self.size)
+        self.isProducing = False
+        self.color = pygame.Color('#424242')
+        self.isMoving = False
+        self.AI = AI
+    
+    def produce(self):
+        x = self.x + random.choice([-1,1]) * random.randint(36,50)
+        y = self.y + random.choice([-1,1]) * random.randint(36,50)
+        newVirus = ViolentVirus(self.AI, x, y)
+        while newVirus.checkCollision() or newVirus in self.AI.viruses:
+            x = self.x + random.choice([-1,1]) * random.randint(36,50)
+            y = self.y + random.choice([-1,1]) * random.randint(36,50)
+            newVirus = ViolentVirus(self.AI, x, y)
+        self.AI.viruses.append(newVirus)
+
+    def productionProgress(self):
+        nowtime = pygame.time.get_ticks()
+        for entry in self.isProducing:       
+            if nowtime - entry >= 2000:
+                i = self.isProducing[entry]
+                newCell = Cell(self.player, self.x - .8 * self.size + i * self.size/2,\
+                     self.y + .8 * self.size)
+                self.isProducing.pop(entry)
+
+                while newCell.checkCollision() or newCell in self.player.cells:
+                    i += 1
+                    newCell = Cell(self.player, self.x - .8 * self.size + i * self.size / 2,\
+                        self.y + .8 * self.size)
+
+                self.player.cells.append(newCell)
+                break
+
+    def draw(self, screen):
+        temp_rect = self.rect.copy()
+        temp_rect.move_ip(self.AI.app.scrollX, self.AI.app.scrollY)
+        screen.blit(VirusBase.image, temp_rect)
+
 class AI(object):
     def __init__(self, app):
         self.app = app
+        self.base = VirusBase(self)
         self.viruses = [ ]
         self.initialNumOfVirus = 3
         self.initializeViruses()
         self.killedCells = [ ]
         self.productionProgress = dict()
         self.difficulty = 0
+        self.birthTime = pygame.time.get_ticks()
+        self.spawnInterval = 20000 # 10 seconds
 
     def initializeViruses(self):
         for i in range(self.initialNumOfVirus):
@@ -211,8 +255,15 @@ class AI(object):
         for i in range(len(self.killedCells) - 1, -1, -1):
             cell = self.killedCells[i]
             cell.spawnVirus()
+        
+    def spawnFromHome(self):
+        nowTime = pygame.time.get_ticks()
+        if nowTime - self.birthTime > self.spawnInterval:
+            self.base.produce()
+            self.birthTime = nowTime
 
     def attack(self):
+        self.spawnFromHome()
         for virus in self.viruses:
             virus.move()
             virus.attack()
@@ -222,4 +273,8 @@ class AI(object):
             virus.draw(screen)
         for cell in self.killedCells:
             cell.draw(screen)
+        self.base.draw(screen)
         
+        
+# image from:
+# http://www.safetysignsireland.ie/caution-toxic-hazard-symbol-safety-sign.html

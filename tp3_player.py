@@ -1,5 +1,5 @@
 import pygame, math, random, copy, time
-from tp2_attacker import *
+from tp3_attacker import *
 
 class Cell(object):
     def __init__(self, player, x, y):
@@ -148,7 +148,7 @@ class Cell(object):
         if self.health <= 0:
             print('rip')
             self.color = pygame.Color('#9575cd')#(153, 102, 255)
-            self.noOfNewVirus = 3
+            self.noOfNewVirus = 2
             self.deathTime = pygame.time.get_ticks()
             self.player.app.AI.killedCells.append(self)
             self.player.cells.remove(self)
@@ -245,6 +245,8 @@ class Macrophage(Cell):
         pass
 
 class Building(object):
+    img = pygame.image.load('shabbyhouse.png')
+    image = pygame.transform.scale(img, (60,60))
     def __init__(self, x, y, player):
         self.size = 40
         (self.x, self.y) = (x, y)
@@ -313,7 +315,8 @@ class Building(object):
     def draw(self, screen):
         temp_rect = self.rect.copy()
         temp_rect.move_ip(self.player.app.scrollX, self.player.app.scrollY)
-        pygame.draw.rect(screen, (self.color), temp_rect)
+        temp_rect.inflate_ip(2, 2)
+        screen.blit(Building.image, temp_rect)
         if self.isSelected:
             pygame.draw.rect(screen, (0,0,0), temp_rect, True)
         if self.health < self.originalHealth:
@@ -321,7 +324,7 @@ class Building(object):
 
 class ImmuneSystem(Building):
     temp = pygame.image.load('house1.png')
-    image = pygame.transform.scale(temp, (40,40))
+    image = pygame.transform.scale(temp, (60,60))
 
     def __init__(self, x, y, player):
         super().__init__(x, y, player)
@@ -347,6 +350,7 @@ class ImmuneSystem(Building):
     def draw(self,screen):
         temp_rect = self.rect.copy()
         temp_rect.move_ip(self.player.app.scrollX, self.player.app.scrollY)
+        temp_rect.inflate_ip(2,2)
         screen.blit(ImmuneSystem.image, temp_rect)
 
         if self.isSelected:
@@ -357,11 +361,17 @@ class ImmuneSystem(Building):
 
 # base is a special kind of building
 class Base(Building):
+    img = pygame.image.load('base1.png')
+    image = pygame.transform.scale(img, (75,75))
     def __init__(self, player):
-        super().__init__(50, 550, player)
+        size = 50
+        x = 50
+        y = player.app.height - 100
+        super().__init__(x, y, player)
         self.color = pygame.Color('#f9a825')
         self.size = 50
         self.health = self.originalHealth = 150
+
         self.rect = pygame.Rect(self.x - self.size / 2 , self.y - self.size / 2, self.size, self.size)
 
     def upgrade(self):
@@ -375,7 +385,8 @@ class Base(Building):
     def draw(self, screen):
         temp_rect = self.rect.copy()
         temp_rect.move_ip(self.player.app.scrollX, self.player.app.scrollY)
-        pygame.draw.rect(screen, (self.color), temp_rect)
+        temp_rect.inflate(40, 40)
+        screen.blit(Base.image, temp_rect)
         if self.isSelected:
             pygame.draw.rect(screen, (0,0,0), temp_rect, True)
         if self.health < self.originalHealth:
@@ -515,4 +526,8 @@ class Player(object):
         screen.blit(surf2, resource_rect)
         screen.blit(surf3, level_rect)
         
+# image from:
+# https://www.pinterest.com/pin/114560384250743791/
+# https://imgbin.com/png/2hLZqV0J/super-meat-boy-isometric-computer-graphics-video-game-sprite-isometric-projection-png
+# https://www.pinterest.com/pin/114560384250743989/
         
