@@ -44,8 +44,8 @@ class Virus(object):
                     print('building under attack')
                     return
 
-    def getAttacked(self):
-        self.health -= 2
+    def getAttacked(self, ad = 2):
+        self.health -= ad
         #print('virus ouch')
         if self.health <= 0:
             self.AI.viruses.remove(self)
@@ -184,11 +184,6 @@ class ViolentVirus(Virus):
 
         except: obj1.isMoving = False
 
-    def stop_to_attack(self):
-        pass
-
-    def escape(self):
-        pass
 
 class VirusBase(object):
     image = pygame.transform.scale(pygame.image.load('virusBase.png'), (50,50))

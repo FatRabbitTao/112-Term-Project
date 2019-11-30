@@ -17,6 +17,7 @@ class PygameGame(object):
         # list of objects, when checking, check obj.rect
         self.all_objects = [ ]
         self.rects = [ ]
+        self.selected = [ ]
         self.scrollX, self.scrollY = 0, 0
         self.gameOver = False
         self.isPaused = False
@@ -91,10 +92,12 @@ class PygameGame(object):
         start_x, start_y = self.dragStartPos
         width = event_x - start_x
         height = event_y - start_y
+        self.selected = [ ]
         self.selectionBox = pygame.Rect(self.dragStartPos, (width, height))
         for cell in self.player.cells:
             if self.selectionBox.colliderect(cell.rect):
                 cell.isSelected = True
+                self.selected.append(cell)
             else: cell.isSelected = False
 
     def mouseReleased(self, event_x, event_y):
@@ -102,6 +105,7 @@ class PygameGame(object):
             self.isDraggingMouse = False
 
     def leftClick(self, coords):
+        self.selected = [ ]
         for cell in self.player.cells:
             cell.checkSelection(coords)
         for building in self.player.buildings:
@@ -120,6 +124,16 @@ class PygameGame(object):
                 if cell.attackTarget == None:
                     cell.attackTarget = coords
                 cell.setAttackStatus()
+    
+    def checkForMerge(self,coords):
+        if len(self.selected) == 1:
+            cell_1 = self.selected[ 0 ]
+            for other_cell in self.player.cells:
+                if other_cell.rect.collidepoint(coords) and \
+                    (cell_1.x - other_cell.x) ** 2 + \
+                    (cell_1.y - other_cell.y) ** 2 <= 25 * cell_1.r ** 2\
+                    and cell_1.ad + other_cell.ad <= 7:
+                    cell_1.merge(other_cell)
 
     def setFarmStatus(self,coords):
         if self.player.resourceBase.rect.collidepoint(coords):
@@ -223,6 +237,11 @@ class PygameGame(object):
                     pygame.mouse.get_pressed()[0]:
                     x, y = pygame.mouse.get_pos()
                     self.setFarmStatus((x - self.scrollX, y - self.scrollY))
+                # merge
+                elif pygame.key.get_pressed()[pygame.K_u] and \
+                    pygame.mouse.get_pressed()[0]:
+                    x, y = pygame.mouse.get_pos()
+                    self.checkForMerge((x - self.scrollX, y - self.scrollY))
                 # normal
                 elif pygame.mouse.get_pressed()[0]:
                     x, y = pygame.mouse.get_pos()

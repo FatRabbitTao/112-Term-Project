@@ -14,7 +14,8 @@ class Cell(object):
         self.rect = pygame.Rect(self.x - self.r, self.y - self.r, self.r*2, self.r*2)
         self.movingDir = (0, 0)
 
-        self.health = 11
+        self.health = self.originalHealth = 11
+        self.ad = 2
         self.barWidth = 2
 
         self.attackTarget = None
@@ -101,7 +102,12 @@ class Cell(object):
 
             else:
                 self.destination = (self.player.resourceBase.x - 5, self.player.resourceBase.y)
-            
+
+    def merge(self, other): # other is another cell
+        self.ad = self.ad + other.ad
+        self.health = min(self.health, other.health)
+        self.player.cells.remove(other)
+
     def setAttackStatus(self):
         if self.attackTarget != None:
             if isinstance(self.attackTarget, Virus):
@@ -133,12 +139,12 @@ class Cell(object):
                     return
 
                 if (self.x - self.attackTarget.x)**2 + (self.y - self.attackTarget.y)**2 <= 20 * self.r **2:
-                    self.attackTarget.getAttacked()
+                    self.attackTarget.getAttacked(self.ad)
                     return
             else:
                 for virus in self.player.app.AI.viruses:
                     if (self.x - virus.x)**2 + (self.y - virus.y)**2 <= 20 * self.r **2:
-                        virus.getAttacked()
+                        virus.getAttacked(self.ad)
                         return
                 self.attackTarget = None
 
@@ -211,6 +217,7 @@ class Cell(object):
             if (self.x - event_x) ** 2 + (self.y - event_y) ** 2 \
                 <= self.r ** 2:
                 self.isSelected = True
+                self.player.app.selected.append(self)
             else: self.isSelected = False
 
     def drawHealthBar(self,screen):    
@@ -240,9 +247,16 @@ class Macrophage(Cell):
         self.health = 20
         self.color = pygame.Color('#9e9e9e')
         self.rect = pygame.Rect(self.x - self.r, self.y - self.r, self.r*2, self.r*2)
+        self.ad = 20
 
     def spawnVirus(self):
         pass
+
+    def attack(self):
+        super().attack()
+
+    def farm(self):pass
+    def merge(self):pass
 
 class Building(object):
     img = pygame.image.load('shabbyhouse.png')
@@ -294,6 +308,7 @@ class Building(object):
             if self.x - self.size/2 <= event_x <= self.x + self.size/2 and \
                 self.y - self.size/2 <= event_y <= self.y + self.size/2:
                 self.isSelected = True
+                self.player.app.selected.append(self)
             else: self.isSelected = False
 
     def getAttacked(self):
@@ -420,17 +435,21 @@ class Resource(object):
 class Player(object):
     def __init__(self, app):
         self.app = app
-        # temp cells
-        self.cells = [Cell(self, self.app.width / 2, self.app.height / 2), 
-                        Cell(self, self.app.width / 3, self.app.height / 3), 
-                        Cell(self, self.app.width * .6, self.app.height * .6)]
         self.base = Base(self)
         self.resourceBase = Resource(self)
         self.buildings = [self.resourceBase, self.base]
         self.score = 0
         self.resourceBase = Resource(self)
         self.resource = 0
+        self.initialNumCell = 3
+        self.cells = [  ]
+        self.initializeCell()
         self.farmingCells = [ ]
+    
+    def initializeCell(self):
+        for i in range(self.initialNumCell):
+            cell = Cell(self, self.base.x, self.base.y - 50 - i * 30)
+            self.cells.append(cell)
 
     def build(self, x, y):
         buildingCost = 20
