@@ -84,11 +84,12 @@ class ViolentVirus(Virus):
             if self.attackTarget == None:
                 self.moveInGeneralDir()
                 (dx, dy) = self.movingDir
-                self.x, self.y = self.x + dx, self.y + dy
+                factor = 3 if self.AI.app.player.base.level > 0 else 2
+                self.x, self.y = self.x + dx * factor, self.y + dy * factor
                 x_low_bound = 5
                 x_high_bound = 1390
-                y_low_bound = -590
-                y_high_bound = 790
+                y_low_bound = -570
+                y_high_bound = 770
                 if self.x < x_low_bound:
                     self.x = x_low_bound
                     self.flipDir()
@@ -111,9 +112,10 @@ class ViolentVirus(Virus):
 
     def moveInGeneralDir(self):
         nowTime = pygame.time.get_ticks()
-        if nowTime - self.move_time >= 5000:
+        timeDiff = random.randint(2500, 5000)
+        if nowTime - self.move_time >= timeDiff:
         # decide whether going to homebase or not
-            self.isGoingHomeBase = (random.random() > 0.5)
+            self.isGoingHomeBase = (random.random() > self.AI.probability)
             choices = self.AI.app.player.buildings[1:]
             if self.isGoingHomeBase:
                 target = random.choice(choices)
@@ -133,8 +135,8 @@ class ViolentVirus(Virus):
                 sign = -1 if x < 0 else 1
                 if x == 0: x += 0.0001
                 theta = math.atan(y / x)
-                dx = sign * math.cos(theta) / 2
-                dy = sign * math.sin(theta) / 2
+                dx = sign * math.cos(theta) 
+                dy = sign * math.sin(theta) 
 
             self.movingDir = (dx, dy)
             self.move_time = nowTime
@@ -259,6 +261,10 @@ class AI(object):
 
     def attack(self):
         self.spawnFromHome()
+        if self.app.currentGoal == 10:
+            self.AI.probability = len(self.AI.app.player.buildings) * 0.2 \
+                if len(self.AI.app.player.buildings) < 3 else 0.5
+
         for virus in self.viruses:
             virus.move()
             virus.attack()

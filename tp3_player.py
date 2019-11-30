@@ -247,7 +247,7 @@ class Macrophage(Cell):
         self.health = 20
         self.color = pygame.Color('#9e9e9e')
         self.rect = pygame.Rect(self.x - self.r, self.y - self.r, self.r*2, self.r*2)
-        self.ad = 20
+        self.ad = 10
 
     def spawnVirus(self):
         pass
@@ -344,6 +344,16 @@ class ImmuneSystem(Building):
     def __init__(self, x, y, player):
         super().__init__(x, y, player)
         self.color = pygame.Color('#e65100')
+
+    def produce(self):
+        producingCost = 10
+        if self.player.resource >= producingCost:
+            self.player.resource -= producingCost
+            i = len(self.isProducing)
+            if i >= 4: 
+                return
+            startTime = pygame.time.get_ticks()
+            self.isProducing[startTime] = i
 
     def productionProgress(self):
         nowtime = pygame.time.get_ticks()
@@ -527,20 +537,23 @@ class Player(object):
         except: obj1.isMoving = False
 
     def draw(self,screen):
-        # draw cells
-        for cell in self.cells:
-            cell.draw(screen)
+        
         # draw buildings
         for building in self.buildings:
             building.draw(screen)
+        # draw cells
+        for cell in self.cells:
+            cell.draw(screen)
         # draw score
         font = pygame.font.SysFont("comicsansms", 24)
         surf1 = font.render(f'score: {self.score}', True, (0,0,0))
         surf2 = font.render(f'resource: {self.resource}', True, (0,0,0))
         surf3 = font.render(f'base level: {self.base.level}', True, (0,0,0))
-        score_rect = pygame.Rect(2,2, 100, 20)
-        resource_rect = pygame.Rect(2, 20, 120, 20)
-        level_rect = pygame.Rect(2, 38, 140, 20)
+        score_rect = pygame.Rect(4,4, 100, 20)
+        resource_rect = pygame.Rect(4, 20, 120, 20)
+        level_rect = pygame.Rect(4, 38, 140, 20)
+        pygame.draw.rect(screen, (255,255,255), pygame.Rect(0,0, 120, 58))
+        pygame.draw.rect(screen, (0,0,0), pygame.Rect(0,0, 120, 58),3)
         screen.blit(surf1, score_rect)
         screen.blit(surf2, resource_rect)
         screen.blit(surf3, level_rect)

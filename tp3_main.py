@@ -2,6 +2,7 @@ import pygame, math, random, copy, time, wave
 
 from tp3_player import *
 from tp3_attacker import *
+from tp3_general_game import *
 
 #edited from http://blog.lukasperaza.com/getting-started-with-pygame/
 class PygameGame(object):
@@ -9,7 +10,7 @@ class PygameGame(object):
         ''' return whether a specific key is being held '''
         return self._keys.get(key, False)
 
-    def __init__(self, width=800, height=800, fps=100, title="testing..."):
+    def __init__(self, width=800, height=780, fps=100, title="testing..."):
         self.width = width
         self.height = height
         self.fps = fps
@@ -36,6 +37,7 @@ class PygameGame(object):
         self.AI = AI(self)
        # self.loadMusic()
         self.loadImage()
+        self.askContinue = AskContinue()
 
         # levels and goals (changeable)
         self.currentGoal = 10
@@ -70,8 +72,16 @@ class PygameGame(object):
             self.gameOver = True
             print('You lost')
         elif self.player.score >= self.currentGoal:
-            self.gameOver = True
-            print('You won!')
+            self.isPaused = True
+            ans = input("You have reached the goal of current level. Continue?(y/n)")
+            if ans in ['y','yes']:
+                self.currentGoal += 10
+                if self.AI.probability <= 0.8:
+                    self.AI.probability += 0.2
+                self.isPaused = False
+            else:
+                self.gameOver = True
+                print('You won')
 
     def mouseDrag(self, event_x, event_y):
         if not self.isDraggingMouse:
@@ -189,14 +199,47 @@ class PygameGame(object):
         if self.waitingToStart:
             width = 500
             start = self.width / 2 - width / 2
-            screen.blit(self.startImg, pygame.Rect(start,50,500,500))
+            screen.blit(self.startImg, pygame.Rect(start,100,500,500))
 
     def drawHelp(self,screen):
         if self.inHelp:
             width = 500
             start = self.width / 2 - width / 2
-            screen.blit(self.helpImg, pygame.Rect(start,50,500,500) )
+            screen.blit(self.helpImg, pygame.Rect(start,100,500,500) )
 
+    def drawSelectionInfo(self,screen):
+        font = pygame.font.SysFont("Helvetica", 22)
+        pygame.draw.rect(screen, (255,255,255), pygame.Rect(self.width / 3, self.height - 22, self.width * 0.67, 22))
+        pygame.draw.rect(screen, (0,0,0), pygame.Rect(self.width / 3, self.height - 22, self.width * 0.67, 22),1)
+        if isinstance(self.selected[0], Building):
+            if type(self.selected[0]) == Base:
+                surf1 = font.render(f"Base: 'u' to upgrade; cost: 100; if level >= 1:'m' to build advanced building", True, (0,0,0))
+                screen.blit(surf1, pygame.Rect(self.width / 3 + 3, self.height - 20, self.width * 0.67, 20))
+            elif isinstance(self.selected[0], ImmuneSystem):
+                surf_ = font.render(f"Advanced building: produce powerful macrophages, cost: 10", True, (0,0,0))
+                screen.blit(surf_, pygame.Rect(self.width / 3 + 3, self.height - 20, self.width * 0.67, 20))
+            else:
+                surf2 = font.render(f"Building: 'c' to produce cells; cost: 5", True, (0,0,0))
+                screen.blit(surf2, pygame.Rect(self.width / 3 + 3, self.height - 20, self.width * 0.67, 20))
+        else:
+            printPhage = printCell = False
+            for cell in self.selected:
+                if isinstance(cell, Macrophage):
+                    printPhage = True
+                if not isinstance(cell, Macrophage) and isinstance(cell, Cell):
+                    printCell = True
+            if printPhage and printCell:
+                surf3 = font.render(f"Macrophage and cell:'a' to attack, rightclick to move", True, (0,0,0))
+                screen.blit(surf3, pygame.Rect(self.width / 3 + 3, self.height - 20, self.width * 0.67, 20))
+            elif printPhage:
+                surf4 = font.render(f"Macrophage:'a' to attack, huge attack power", True, (0,0,0))
+                screen.blit(surf4, pygame.Rect(self.width / 3 + 3, self.height - 20, self.width * 0.67, 20))
+            elif printCell:
+                surf5 = font.render(f"Normal cell:'f' to farm, 'u' to merge with another cell, 'a' to attack", True, (0,0,0))
+                screen.blit(surf5, pygame.Rect(self.width / 3 + 3, self.height - 20, self.width * 0.67, 20))
+
+    def drawAskContinue(self,screen):
+        pass
 
     def run(self):
         clock = pygame.time.Clock()
@@ -296,8 +339,8 @@ class PygameGame(object):
             screen.fill(pygame.Color('#fff59d')) #(255, 255, 179)
 
             # draw everything
-            self.AI.draw(screen)
             self.player.draw(screen)
+            self.AI.draw(screen)
             
             # draw selection box
             if self.selectionBox != None:
@@ -306,9 +349,13 @@ class PygameGame(object):
                 pygame.draw.rect(screen, (0,0,0),temp_rect,True)
                 self.selectionBox = None
 
-            #self.redrawAll(screen)
             self.drawStart(screen)
             self.drawHelp(screen)
+            
+            # draw selection info
+            if len(self.selected) > 0:
+                self.drawSelectionInfo(screen)
+
             pygame.display.flip()
 
         pygame.quit()
