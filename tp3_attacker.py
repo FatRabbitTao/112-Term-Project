@@ -274,7 +274,9 @@ class AI(object):
         if self.app.currentGoal == 10:
             self.probability = len(self.app.player.buildings) * 0.2 \
                 if len(self.app.player.buildings) < 3 else 0.5
-
+        else:
+            self.probability = 0.5
+            
         for virus in self.viruses:
             virus.move()
             virus.attack()

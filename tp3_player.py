@@ -8,7 +8,7 @@ class Cell(object):
         self.isSelected = False
         self.color = pygame.Color('#ff5252')
         self.r = 10
-        self.velocity = 2
+        self.velocity = 3
         self.isMoving = False
         self.isFarming = False
         self.rect = pygame.Rect(self.x - self.r, self.y - self.r, self.r*2, self.r*2)

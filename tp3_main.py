@@ -20,7 +20,7 @@ class PygameGame(object):
         self.rects = [ ]
         self.selected = [ ]
         self.scrollX, self.scrollY = 0, 0
-        self.gameOver = False
+        self.gameOver = self.askContinue = False
         self.isPaused = False
         self.inHelp = False
 
@@ -37,9 +37,8 @@ class PygameGame(object):
         self.AI = AI(self)
         self.loadMusic()
         self.loadImage()
-        self.askContinue = AskContinue()
         # levels and goals (changeable)
-        self.currentGoal = 10
+        self.currentGoal = 1
         pygame.init()
 
     def loadMusic(self):
@@ -55,8 +54,6 @@ class PygameGame(object):
 #####################################################################
 ################ Controllers ########################################
     
-
-
     def timerFired(self, dt):
         if (not self.gameOver) and (not self.waitingToStart) and (not self.isPaused):
             self.player.moveCells()
@@ -70,18 +67,9 @@ class PygameGame(object):
     def checkGameCondition(self):
         if len(self.player.buildings) == 1: # only have the resource pool left
             self.gameOver = True
-            print('You lost')
         elif self.player.score >= self.currentGoal:
             self.isPaused = True
-            ans = input("You have reached the goal of current level. Continue?(y/n)")
-            if ans in ['y','yes']:
-                self.currentGoal += 10
-                if self.AI.probability <= 0.8:
-                    self.AI.probability += 0.2
-                self.isPaused = False
-            else:
-                self.gameOver = True
-                print('You won')
+            self.askContinue = True
 
     def mouseDrag(self, event_x, event_y):
         if not self.isDraggingMouse:
@@ -120,6 +108,22 @@ class PygameGame(object):
             cell.checkSelection(coords)
         for building in self.player.buildings:
             building.checkSelection(coords)
+
+        if self.askContinue:
+            print('huh?')
+            x, y = coords
+            if self.askScreen.buttons[1].rect.collidepoint((x + self.scrollX,y + self.scrollY)):
+                print('yay')
+                self.currentGoal += 10
+                if self.AI.probability <= 0.8:
+                    self.AI.probability += 0.2
+                self.isPaused = False
+                self.askContinue = False
+            
+            elif self.askScreen.buttons[2].rect.collidepoint((x + self.scrollX,y + self.scrollY)):
+                print('nah')
+                self.gameOver = True
+
 
     def setAttackStatus(self, coords):
         for i in range(len(self.player.cells)-1,-1,-1):
@@ -232,6 +236,11 @@ class PygameGame(object):
                 screen.blit(surf2, pygame.Rect(self.width / 3 + 3, self.height - 20, self.width * 0.67, 20))
         else:
             printPhage = printCell = False
+            if len(self.selected) == 1 and (not isinstance(self.selected[0], Macrophage)):
+                msg = f"Cell: level {self.selected[0].ad // 2};'f':farm;'u':merge another cell;'a':attack;'i':freeze"
+                surf6 = font.render(msg, True, (0,0,0))
+                screen.blit(surf6, pygame.Rect(self.width / 3 + 3, self.height - 20, self.width * 0.67, 20))
+                return
             for cell in self.selected:
                 if isinstance(cell, Macrophage):
                     printPhage = True
@@ -248,7 +257,17 @@ class PygameGame(object):
                 screen.blit(surf5, pygame.Rect(self.width / 3 + 3, self.height - 20, self.width * 0.67, 20))
 
     def drawAskContinue(self,screen):
-        pass
+        self.askScreen = AskContinue(self)
+        self.askScreen.draw(screen)
+
+    def drawGameOver(self, screen):
+        font = pygame.font.Font(None,35)
+        text = font.render(f'You have scored {self.player.score}.', True, (0,0,0))
+        rect = pygame.Rect(self.width/3, self.height / 3, self.width * 0.33, self.height / 3)
+        pygame.draw.rect(screen, pygame.Color('#9e9e9e'), rect)
+        pygame.draw.rect(screen, (0,0,0), rect,2)
+        rect1 = pygame.Rect(self.width * 0.4, self.height * 0.4, self.width * 0.3, self.height * 3)
+        screen.blit(text, rect1)
 
     def run(self):
         clock = pygame.time.Clock()
@@ -369,6 +388,11 @@ class PygameGame(object):
             # draw selection info
             if len(self.selected) > 0:
                 self.drawSelectionInfo(screen)
+            
+            if self.askContinue:
+                self.drawAskContinue(screen)
+            if self.gameOver:
+                self.drawGameOver(screen)
 
             pygame.display.flip()
 
