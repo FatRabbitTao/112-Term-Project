@@ -38,7 +38,7 @@ class PygameGame(object):
         self.loadMusic()
         self.loadImage()
         # levels and goals (changeable)
-        self.currentGoal = 1
+        self.currentGoal = 10
         pygame.init()
 
     def loadMusic(self):
@@ -122,6 +122,7 @@ class PygameGame(object):
             
             elif self.askScreen.buttons[2].rect.collidepoint((x + self.scrollX,y + self.scrollY)):
                 print('nah')
+                self.askContinue = False
                 self.gameOver = True
 
 
@@ -263,11 +264,11 @@ class PygameGame(object):
     def drawGameOver(self, screen):
         font = pygame.font.Font(None,35)
         text = font.render(f'You have scored {self.player.score}.', True, (0,0,0))
-        rect = pygame.Rect(self.width/3, self.height / 3, self.width * 0.33, self.height / 3)
-        pygame.draw.rect(screen, pygame.Color('#9e9e9e'), rect)
-        pygame.draw.rect(screen, (0,0,0), rect,2)
-        rect1 = pygame.Rect(self.width * 0.4, self.height * 0.4, self.width * 0.3, self.height * 3)
-        screen.blit(text, rect1)
+        rect = pygame.Rect(self.width/3, self.height / 3, self.width * 0.4, self.height / 6)
+        pygame.draw.rect(screen, pygame.Color('#9e9e9e'), rect) # grey box
+        pygame.draw.rect(screen, (0,0,0), rect, 2 ) # outline
+        rect1 = pygame.Rect(self.width * 0.4, self.height * 0.4, self.width * 0.4, self.height / 6)
+        screen.blit(text, rect1) # text
 
     def run(self):
         clock = pygame.time.Clock()

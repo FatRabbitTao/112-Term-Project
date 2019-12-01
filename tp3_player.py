@@ -334,7 +334,7 @@ class Building(object):
     def draw(self, screen):
         temp_rect = self.rect.copy()
         temp_rect.move_ip(self.player.app.scrollX, self.player.app.scrollY)
-        temp_rect.inflate_ip(2, 2)
+        temp_rect.inflate_ip(20, 20)
         screen.blit(Building.image, temp_rect)
         if self.isSelected:
             pygame.draw.rect(screen, (0,0,0), temp_rect, True)
@@ -379,7 +379,7 @@ class ImmuneSystem(Building):
     def draw(self,screen):
         temp_rect = self.rect.copy()
         temp_rect.move_ip(self.player.app.scrollX, self.player.app.scrollY)
-        temp_rect.inflate_ip(2,2)
+        temp_rect.inflate_ip(20,20)
         screen.blit(ImmuneSystem.image, temp_rect)
 
         if self.isSelected:
@@ -414,7 +414,7 @@ class Base(Building):
     def draw(self, screen):
         temp_rect = self.rect.copy()
         temp_rect.move_ip(self.player.app.scrollX, self.player.app.scrollY)
-        temp_rect.inflate(40, 40)
+        temp_rect.inflate_ip(20, 20)
         screen.blit(Base.image, temp_rect)
         if self.isSelected:
             pygame.draw.rect(screen, (0,0,0), temp_rect, True)

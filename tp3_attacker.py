@@ -122,7 +122,7 @@ class ViolentVirus(Virus):
 
     def moveInGeneralDir(self):
         nowTime = pygame.time.get_ticks()
-        timeDiff = random.randint(2500, 5000)
+        timeDiff = random.randint(800, 5000)
         if nowTime - self.move_time >= timeDiff:
         # decide whether going to homebase or not
             self.isGoingHomeBase = (random.random() > self.AI.probability)
@@ -276,7 +276,7 @@ class AI(object):
                 if len(self.app.player.buildings) < 3 else 0.5
         else:
             self.probability = 0.5
-            
+
         for virus in self.viruses:
             virus.move()
             virus.attack()
