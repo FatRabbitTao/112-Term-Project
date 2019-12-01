@@ -16,6 +16,7 @@ class Virus(object):
         self.barWidth = self.r * 2 / self.health
         self.movingDir = (0, 0)
         self.attack_time = self.move_time = pygame.time.get_ticks() 
+        self.frozen = False
         
 
     def __eq__(self, other):
@@ -25,7 +26,16 @@ class Virus(object):
     def __repr__(self):
         return f'Virus at ({self.x},{self.y}) position'
 
+    def getFreezed(self):
+        self.frozenTime = pygame.time.get_ticks()
+        self.frozen = True
+
     def attack(self):
+        if self.frozen:
+            if pygame.time.get_ticks() - self.frozenTime >= 15000:
+                self.frozenTime = None
+                self.frozen = False
+            else: return
         nowTime = pygame.time.get_ticks()
         timeDiff = nowTime - self.attack_time
         if timeDiff <= 500: return
@@ -80,7 +90,7 @@ class ViolentVirus(Virus):
         self.destination = None
 
     def move(self):
-        if self.isMoving:
+        if self.isMoving and (not self.frozen):
             if self.attackTarget == None:
                 self.moveInGeneralDir()
                 (dx, dy) = self.movingDir
@@ -262,8 +272,8 @@ class AI(object):
     def attack(self):
         self.spawnFromHome()
         if self.app.currentGoal == 10:
-            self.AI.probability = len(self.AI.app.player.buildings) * 0.2 \
-                if len(self.AI.app.player.buildings) < 3 else 0.5
+            self.probability = len(self.app.player.buildings) * 0.2 \
+                if len(self.app.player.buildings) < 3 else 0.5
 
         for virus in self.viruses:
             virus.move()

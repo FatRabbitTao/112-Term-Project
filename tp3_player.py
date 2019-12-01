@@ -120,6 +120,9 @@ class Cell(object):
                 #print(self.rect,'move')
                 self.isMoving = True
                 self.destination = (x, y)
+
+    def freeze(self, target): # target is a virus
+        target.getFreezed()
         
     def attack(self):
         if self.attackTarget != None:
@@ -249,12 +252,7 @@ class Macrophage(Cell):
         self.rect = pygame.Rect(self.x - self.r, self.y - self.r, self.r*2, self.r*2)
         self.ad = 10
 
-    def spawnVirus(self):
-        pass
-
-    def attack(self):
-        super().attack()
-
+    def spawnVirus(self):pass
     def farm(self):pass
     def merge(self):pass
 
@@ -301,6 +299,12 @@ class Building(object):
 
                 self.player.cells.append(newCell)
                 break
+
+    def upgrade(self):
+        buildingCost = 50
+        if self.isSelected and self.player.resource >= buildingCost:
+            self.level += 1
+            self.player.resource -= buildingCost
 
     def checkSelection(self, selection):
         if isinstance(selection, tuple):

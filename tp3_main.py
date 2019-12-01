@@ -10,7 +10,7 @@ class PygameGame(object):
         ''' return whether a specific key is being held '''
         return self._keys.get(key, False)
 
-    def __init__(self, width=800, height=780, fps=100, title="testing..."):
+    def __init__(self, width=800, height=780, fps=30, title="testing..."):
         self.width = width
         self.height = height
         self.fps = fps
@@ -35,17 +35,17 @@ class PygameGame(object):
         self.waitingToStart = True
         self.player = Player(self)
         self.AI = AI(self)
-       # self.loadMusic()
+        self.loadMusic()
         self.loadImage()
         self.askContinue = AskContinue()
-
         # levels and goals (changeable)
         self.currentGoal = 10
+        pygame.init()
 
     def loadMusic(self):
-        pygame.mixer.init(55000)
+        pygame.mixer.init(44100)
         pygame.mixer.music.load('music.mp3')
-        pygame.mixer.music.play(- 1)
+        pygame.mixer.music.play( -1)
 
     def loadImage(self):
         startImg = pygame.image.load('startPic.png')
@@ -54,7 +54,7 @@ class PygameGame(object):
         self.helpImg = pygame.transform.scale(helpImg, (500, 250))
 #####################################################################
 ################ Controllers ########################################
-    pygame.init()
+    
 
 
     def timerFired(self, dt):
@@ -144,6 +144,15 @@ class PygameGame(object):
                     (cell_1.y - other_cell.y) ** 2 <= 25 * cell_1.r ** 2\
                     and cell_1.ad + other_cell.ad <= 7:
                     cell_1.merge(other_cell)
+
+    def checkForFreeze(self,coords):
+        if len(self.selected) == 1:
+            cell = self.selected[ 0 ]
+            for virus in self.AI.viruses:
+                if virus.rect.collidepoint(coords) and \
+                    (cell.x - virus.x) ** 2 + \
+                    (cell.y - virus.y) ** 2 <= 25 * cell.r ** 2:
+                    cell.freeze(virus)
 
     def setFarmStatus(self,coords):
         if self.player.resourceBase.rect.collidepoint(coords):
@@ -235,7 +244,7 @@ class PygameGame(object):
                 surf4 = font.render(f"Macrophage:'a' to attack, huge attack power", True, (0,0,0))
                 screen.blit(surf4, pygame.Rect(self.width / 3 + 3, self.height - 20, self.width * 0.67, 20))
             elif printCell:
-                surf5 = font.render(f"Normal cell:'f' to farm, 'u' to merge with another cell, 'a' to attack", True, (0,0,0))
+                surf5 = font.render(f"Normal cell->'f':farm;'u':merge another cell;'a':attack;'i':freeze enemy", True, (0,0,0))
                 screen.blit(surf5, pygame.Rect(self.width / 3 + 3, self.height - 20, self.width * 0.67, 20))
 
     def drawAskContinue(self,screen):
@@ -285,6 +294,11 @@ class PygameGame(object):
                     pygame.mouse.get_pressed()[0]:
                     x, y = pygame.mouse.get_pos()
                     self.checkForMerge((x - self.scrollX, y - self.scrollY))
+                # freeze
+                elif pygame.key.get_pressed()[pygame.K_i] and \
+                    pygame.mouse.get_pressed()[0]:
+                    x, y = pygame.mouse.get_pos()
+                    self.checkForFreeze((x - self.scrollX, y - self.scrollY))
                 # normal
                 elif pygame.mouse.get_pressed()[0]:
                     x, y = pygame.mouse.get_pos()
