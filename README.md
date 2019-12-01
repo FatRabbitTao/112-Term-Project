@@ -1,3 +1,3 @@
 # 112TermProject
 
-# please run tp2_main.py
+# please run tp3_main.py
