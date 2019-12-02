@@ -459,7 +459,7 @@ class Resource(object):
         self.rect = pygame.Rect(self.x - self.r , self.y - self.r, self.r * 2, self.r*2)
         self.isSelected = False
         self.isMoving = False
-        self.progress = 205 # rmb to change back to 1000
+        self.progress = 1000 # rmb to change back to 1000
 
     # the resource is put under building but is not able to do anything
     def produce(self):pass
@@ -589,6 +589,7 @@ class Player(object):
         if hasattr(self.app, 'otherResource'):
             self.app.otherResource.draw(screen)
 
+    def drawSpecs(self,screen):
         # draw score
         font = pygame.font.SysFont("comicsansms", 24)
         surf1 = font.render(f'score: {self.score}', True, (0,0,0))

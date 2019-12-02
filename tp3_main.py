@@ -66,20 +66,21 @@ class PygameGame(object):
             self.newResource()
 
     def newResource(self):
-        if self.player.resourceBase.progress < 200 and (not hasattr(self,'otherResource')):
+        if self.player.resourceBase.progress <= 0:
             print('running out')
             print(hasattr(self.player,'otherResource'))
-            x = random.randint(850, 1350)
-            y = random.randint(-570, -20)
+            x = random.randint(700, 1350)
+            y = random.randint(-570, 100)
             tempResource = Resource(self.player, x, y)
             temp = self.player.cells + self.player.buildings + \
             self.AI.viruses + self.AI.killedCells + [self.AI.base]
             while tempResource.rect.collidelist(temp) != -1:
-                x = random.randint(50, 1350)
-                y = random.randint(-550, 750)
+                x = random.randint(700, 1350)
+                y = random.randint(-570, 100)
                 tempResource = Resource(self.player, x, y)
             print('now to find it', x, y)
-            self.otherResource = tempResource # the x y position of the resource need to be modified
+            self.player.resourceBase = tempResource # the x y position of the resource need to be modified
+            self.player.buildings[0] = tempResource
 
     def checkGameCondition(self):
         if len(self.player.buildings) == 1: # only have the resource pool left
@@ -125,6 +126,17 @@ class PygameGame(object):
             cell.checkSelection(coords)
         for building in self.player.buildings:
             building.checkSelection(coords)
+        
+        x, y = coords
+        cx, cy = x + self.scrollX, y + self.scrollY
+        if pygame.Rect(0, 59, 142, 142).collidepoint((cx,cy)):
+            cy -= 59
+            print(cx, cy)
+            sx = max(0, cx - 40) if cx < 80 else min(60, cx - 40)
+            sy = max(0, cy - 39) if cy < 80 else min(60, cy - 39)
+            print(cx, cy,sx,sy)
+            self.scrollX = -sx * 10
+            self.scrollY = -10 * (sy - 60)
 
         if self.askContinue:
             print('huh?')
@@ -297,9 +309,11 @@ class PygameGame(object):
         for building in self.player.buildings:
             rect = pygame.Rect(building.x/10 -2, building.y/10 + 58, 4, 4)
             pygame.draw.rect(minimap,blue,rect)
-        red = pygame.Color('#ff1744' )
+        red = pygame.Color('#ff1744')
         for virus in self.AI.viruses:
-            pygame.draw.circle(minimap,red,(int(virus.x/10),int(virus.y/10)+60),2 )
+            pygame.draw.circle(minimap,red,(int(virus.x/10),int(virus.y/10)+60),2)
+        view_rect = pygame.Rect( - int(self.scrollX / 10), 60 - int(self.scrollY / 10), 80, 78 )
+        pygame.draw.rect(minimap, (255,255,255),view_rect,True)
 
     def run(self):
         clock = pygame.time.Clock()
@@ -417,10 +431,11 @@ class PygameGame(object):
 
             self.drawStart(screen)
             self.drawHelp(screen)
+            self.player.drawSpecs(screen)
             self.drawMiniMap(minimap)
             
             screen.blit(minimap, pygame.Rect(0, 59, 142, 142))
-            #pygame.display.update(pygame.Rect(0, 59, 142, 142))
+
             # draw selection info
             if len(self.selected) > 0:
                 self.drawSelectionInfo(screen)
