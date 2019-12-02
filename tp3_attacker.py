@@ -287,7 +287,7 @@ class AI(object):
         for virus in self.viruses:
             virus.draw(screen)
         for cell in self.killedCells:
-            cell.draw(screen)
+            cell.drawDead(screen)
         self.base.draw(screen)
         
         

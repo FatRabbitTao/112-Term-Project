@@ -4,6 +4,8 @@ from tp3_attacker import *
 class Cell(object):
     img = pygame.image.load('cell.png')
     image = pygame.transform.scale(img,(22,22))
+    dimg = pygame.image.load('deadcell.png')
+    deadimage = pygame.transform.scale(dimg,(22,22))
 
 # pic from: https://www.pinterest.com/pin/365917538467273861/
     def __init__(self, player, x, y):
@@ -248,6 +250,11 @@ class Cell(object):
                      int(self.y + self.player.app.scrollY)), self.r + 1, True)
         self.drawHealthBar(screen)
 
+    def drawDead(self,screen):
+        temp_rect = self.rect.copy()
+        temp_rect.move_ip(self.player.app.scrollX, self.player.app.scrollY)
+        screen.blit(Cell.deadimage, temp_rect)
+
 class Macrophage(Cell):
     img = pygame.image.load('macrophage.png')
     image = pygame.transform.scale(img, (34,34))
@@ -262,6 +269,7 @@ class Macrophage(Cell):
     def spawnVirus(self):pass
     def farm(self):pass
     def merge(self):pass
+    def drawDead(self):pass
     def draw(self, screen):
         temp_rect = self.rect.copy()
         temp_rect.move_ip(self.player.app.scrollX, self.player.app.scrollY)
@@ -274,8 +282,8 @@ class Macrophage(Cell):
         self.drawHealthBar(screen)
 
 class Building(object):
-    img = pygame.image.load('shabbyhouse.png')
-    image = pygame.transform.scale(img, (60,60))
+    img = pygame.image.load('cellfactory.png')
+    image = pygame.transform.scale(img, (60,54))
     def __init__(self, x, y, player):
         self.size = 40
         (self.x, self.y) = (x, y)
@@ -359,8 +367,8 @@ class Building(object):
             self.drawHealthBar(screen)
 
 class ImmuneSystem(Building):
-    temp = pygame.image.load('house1.png')
-    image = pygame.transform.scale(temp, (60,60))
+    temp = pygame.image.load('gudcellfactory.png')
+    image = pygame.transform.scale(temp, (60,56))
 
     def __init__(self, x, y, player):
         super().__init__(x, y, player)
@@ -408,7 +416,7 @@ class ImmuneSystem(Building):
 
 # base is a special kind of building
 class Base(Building):
-    img = pygame.image.load('base1.png')
+    img = pygame.image.load('base.png')
     image = pygame.transform.scale(img, (75,75))
     def __init__(self, player):
         size = 50
@@ -440,6 +448,8 @@ class Base(Building):
             self.drawHealthBar(screen)
 
 class Resource(object):
+    img = pygame.image.load('resource.png')
+    image = pygame.transform.scale(img, (60,60))
     def __init__(self, player):
         self.player = player
         self.x, self.y = self.player.base.x, self.player.base.y - 300
@@ -456,12 +466,10 @@ class Resource(object):
     def getAttacked(self):pass
 
     def draw(self,screen):
-        pygame.draw.circle(screen, self.color,\
-                (int(self.x + self.player.app.scrollX), \
-                    int(self.y + self.player.app.scrollY)), self.r)
-        pygame.draw.circle(screen, (0,77,64),\
-            (int(self.x + self.player.app.scrollX),\
-                    int(self.y + self.player.app.scrollY)), self.r + 1, True)
+        temp_rect = self.rect.copy()
+        temp_rect.move_ip(self.player.app.scrollX, self.player.app.scrollY)
+        temp_rect.inflate_ip(10, 10)
+        screen.blit(Resource.image, temp_rect)
 
 
 class Player(object):
@@ -581,7 +589,9 @@ class Player(object):
         screen.blit(surf3, level_rect)
         
 # image from:
-# https://www.pinterest.com/pin/114560384250743791/
-# https://imgbin.com/png/2hLZqV0J/super-meat-boy-isometric-computer-graphics-video-game-sprite-isometric-projection-png
-# https://www.pinterest.com/pin/114560384250743989/
+# https://www.pinterest.com/pin/42362052718055417/?lp=true
+# https://www.pinterest.com/pin/560064903643619800/
+# https://www.pinterest.com/pin/102597697731733520/
+# https://www.123rf.com/photo_111834093_stock-vector-cute-funny-cell-with-nucleus-humanized-bacteria-cartoon-character-vector-illustration-isolated-on-a-.html
+# https://www.pinterest.com/pin/460633868139050903/
         

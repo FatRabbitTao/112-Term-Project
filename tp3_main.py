@@ -115,6 +115,8 @@ class PygameGame(object):
             if self.askScreen.buttons[1].rect.collidepoint((x + self.scrollX,y + self.scrollY)):
                 print('yay')
                 self.currentGoal += 10
+                if self.AI.spawnInterval > 1000:
+                    self.AI.spawnInterval -= 1000
                 if self.AI.probability <= 0.8:
                     self.AI.probability += 0.2
                 self.isPaused = False
@@ -269,6 +271,18 @@ class PygameGame(object):
         pygame.draw.rect(screen, (0,0,0), rect, 2 ) # outline
         rect1 = pygame.Rect(self.width * 0.4, self.height * 0.4, self.width * 0.4, self.height / 6)
         screen.blit(text, rect1) # text
+    
+    def drawMiniMap(self,minimap):
+        g = pygame.Color('#4caf50')
+        for cell in self.player.cells:
+            pygame.draw.circle(minimap,g,(int(cell.x /10), int(cell.y/10) + 60), 2)
+        blue = pygame.Color('#42a5f5')
+        for building in self.player.buildings:
+            rect = pygame.Rect(building.x/10 -2, building.y/10 + 58, 4, 4)
+            pygame.draw.rect(minimap,blue,rect)
+        red = pygame.Color('#ff1744' )
+        for virus in self.AI.viruses:
+            pygame.draw.circle(minimap,red,(int(virus.x/10),int(virus.y/10)+60),2 )
 
     def run(self):
         clock = pygame.time.Clock()
@@ -280,7 +294,8 @@ class PygameGame(object):
         playing = True
         while playing:
             time = clock.tick(self.fps)
-            self.timerFired(time)       
+            self.timerFired(time)
+            minimap = pygame.Surface((140,140))    
             # music: Diana Boncheva feat. BanYa - Beethoven Virus Full Version 
             # from https://www.youtube.com/watch?v=DtKCNJmARF0
             ################## Events ###########################
@@ -385,7 +400,10 @@ class PygameGame(object):
 
             self.drawStart(screen)
             self.drawHelp(screen)
+            self.drawMiniMap(minimap)
             
+            screen.blit(minimap, pygame.Rect(0, 59, 142, 142))
+            #pygame.display.update(pygame.Rect(0, 59, 142, 142))
             # draw selection info
             if len(self.selected) > 0:
                 self.drawSelectionInfo(screen)
