@@ -2,6 +2,9 @@ import pygame, math, random, copy, time
 from tp3_player import *
 
 class Virus(object):
+    img = pygame.image.load('T4virus.png')
+    image = pygame.transform.scale(img, (30,30))
+# pic from https://www.pinterest.com/pin/395894623487498283/
     def __init__(self, AI, x, y):
         self.AI = AI
         self.x, self.y = x, y
@@ -74,12 +77,11 @@ class Virus(object):
             pygame.draw.rect(screen, (255,0,0), tempRect, 1)
 
     def draw(self, screen):
-        pygame.draw.circle(screen, self.color,\
-                (int(self.x + self.AI.app.scrollX), \
-                    int(self.y + self.AI.app.scrollY)), self.r)
-        pygame.draw.circle(screen, pygame.Color('#1b5e20'),\
-                (int(self.x + self.AI.app.scrollX), \
-                    int(self.y + self.AI.app.scrollY)), self.r + 1, 1)
+        temp_rect = self.rect.copy()
+        temp_rect.move_ip(self.AI.app.scrollX, self.AI.app.scrollY)
+        temp_rect.inflate_ip(10,10)
+        screen.blit(Virus.image, temp_rect)
+
         self.drawHealthBar(screen)
 
 class ViolentVirus(Virus):

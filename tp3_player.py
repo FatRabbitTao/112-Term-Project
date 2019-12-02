@@ -2,6 +2,10 @@ import pygame, math, random, copy, time
 from tp3_attacker import *
 
 class Cell(object):
+    img = pygame.image.load('cell.png')
+    image = pygame.transform.scale(img,(22,22))
+
+# pic from: https://www.pinterest.com/pin/365917538467273861/
     def __init__(self, player, x, y):
         self.player = player
         self.x, self.y = x, y
@@ -234,9 +238,10 @@ class Cell(object):
             pygame.draw.rect(screen, (255,0,0), tempRect, 1)
 
     def draw(self, screen):
-        pygame.draw.circle(screen, self.color,\
-                (int(self.x + self.player.app.scrollX), \
-                    int(self.y + self.player.app.scrollY)), self.r)
+        temp_rect = self.rect.copy()
+        temp_rect.move_ip(self.player.app.scrollX, self.player.app.scrollY)
+        screen.blit(Cell.image, temp_rect)
+
         if self.isSelected:
             pygame.draw.circle(screen, pygame.Color('#905548'),\
                 (int(self.x + self.player.app.scrollX),\
@@ -244,6 +249,8 @@ class Cell(object):
         self.drawHealthBar(screen)
 
 class Macrophage(Cell):
+    img = pygame.image.load('macrophage.png')
+    image = pygame.transform.scale(img, (34,34))
     def __init__(self,player,x,y):
         super().__init__(player,x,y)
         self.r = 15
@@ -251,10 +258,20 @@ class Macrophage(Cell):
         self.color = pygame.Color('#9e9e9e')
         self.rect = pygame.Rect(self.x - self.r, self.y - self.r, self.r*2, self.r*2)
         self.ad = 10
-
+# pic from: https://www.pinterest.com/pin/127367495699425645/
     def spawnVirus(self):pass
     def farm(self):pass
     def merge(self):pass
+    def draw(self, screen):
+        temp_rect = self.rect.copy()
+        temp_rect.move_ip(self.player.app.scrollX, self.player.app.scrollY)
+        screen.blit(Macrophage.image, temp_rect)
+
+        if self.isSelected:
+            pygame.draw.circle(screen, pygame.Color('#905548'),\
+                (int(self.x + self.player.app.scrollX),\
+                     int(self.y + self.player.app.scrollY)), self.r + 1, True)
+        self.drawHealthBar(screen)
 
 class Building(object):
     img = pygame.image.load('shabbyhouse.png')
@@ -348,11 +365,12 @@ class ImmuneSystem(Building):
     def __init__(self, x, y, player):
         super().__init__(x, y, player)
         self.color = pygame.Color('#e65100')
+        self.producingCost = 10
 
     def produce(self):
-        producingCost = 10
-        if self.player.resource >= producingCost:
-            self.player.resource -= producingCost
+        if self.player.resource >= self.producingCost:
+            self.player.resource -= self.producingCost
+            self.producingCost = int(self.producingCost*1.5)
             i = len(self.isProducing)
             if i >= 4: 
                 return

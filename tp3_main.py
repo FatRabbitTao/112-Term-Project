@@ -230,7 +230,7 @@ class PygameGame(object):
                 surf1 = font.render(f"Base: 'u' to upgrade; cost: 100; if level >= 1:'m' to build advanced building", True, (0,0,0))
                 screen.blit(surf1, pygame.Rect(self.width / 3 + 3, self.height - 20, self.width * 0.67, 20))
             elif isinstance(self.selected[0], ImmuneSystem):
-                surf_ = font.render(f"Advanced building: produce powerful macrophages, cost: 10", True, (0,0,0))
+                surf_ = font.render(f"Advanced building: produce powerful macrophages, cost:{self.selected[0].producingCost}", True, (0,0,0))
                 screen.blit(surf_, pygame.Rect(self.width / 3 + 3, self.height - 20, self.width * 0.67, 20))
             else:
                 surf2 = font.render(f"Building: 'c' to produce cells; cost: 5", True, (0,0,0))
