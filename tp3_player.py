@@ -89,6 +89,7 @@ class Cell(object):
                 if (self.x - self.player.resourceBase.x)**2 + \
                     (self.y - self.player.resourceBase.y)**2 <= (self.r + self.player.resourceBase.r)**2 + 600:
                     self.x += 10
+                    self.player.resourceBase.progress -= 5
                     self.destination = (self.player.base.x + 5, self.player.base.y)
                     self.setMovingDirection()
                     self.isMoving = True
@@ -450,14 +451,15 @@ class Base(Building):
 class Resource(object):
     img = pygame.image.load('resource.png')
     image = pygame.transform.scale(img, (60,60))
-    def __init__(self, player):
+    def __init__(self, player, x, y):
         self.player = player
-        self.x, self.y = self.player.base.x, self.player.base.y - 300
+        self.x, self.y = x, y
         self.color = pygame.Color('#29b6f6')
         self.r = 20
         self.rect = pygame.Rect(self.x - self.r , self.y - self.r, self.r * 2, self.r*2)
         self.isSelected = False
         self.isMoving = False
+        self.progress = 205 # rmb to change back to 1000
 
     # the resource is put under building but is not able to do anything
     def produce(self):pass
@@ -470,16 +472,25 @@ class Resource(object):
         temp_rect.move_ip(self.player.app.scrollX, self.player.app.scrollY)
         temp_rect.inflate_ip(10, 10)
         screen.blit(Resource.image, temp_rect)
+        self.drawProgressBar(screen)
 
+    def drawProgressBar(self,screen):    
+        height = 4
+        start_x = self.x - 18
+        start_y = self.y - 20 - height * 2
+        n = self.progress // 100
+        for i in range(n):
+            tempRect = pygame.Rect(start_x + i * 4 + self.player.app.scrollX,\
+                 start_y + self.player.app.scrollY, 4, height)
+            pygame.draw.rect(screen, (255,0,0), tempRect)
 
 class Player(object):
     def __init__(self, app):
         self.app = app
         self.base = Base(self)
-        self.resourceBase = Resource(self)
+        self.resourceBase = Resource(self, self.base.x, self.base.y - 300)
         self.buildings = [self.resourceBase, self.base]
         self.score = 0
-        self.resourceBase = Resource(self)
         self.resource = 0
         self.initialNumCell = 3
         self.cells = [  ]
@@ -574,6 +585,10 @@ class Player(object):
         # draw cells
         for cell in self.cells:
             cell.draw(screen)
+
+        if hasattr(self.app, 'otherResource'):
+            self.app.otherResource.draw(screen)
+
         # draw score
         font = pygame.font.SysFont("comicsansms", 24)
         surf1 = font.render(f'score: {self.score}', True, (0,0,0))

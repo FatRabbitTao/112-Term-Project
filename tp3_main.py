@@ -63,6 +63,23 @@ class PygameGame(object):
             self.AI.attack()
             self.AI.spawn()
             self.checkGameCondition()
+            self.newResource()
+
+    def newResource(self):
+        if self.player.resourceBase.progress < 200 and (not hasattr(self,'otherResource')):
+            print('running out')
+            print(hasattr(self.player,'otherResource'))
+            x = random.randint(850, 1350)
+            y = random.randint(-570, -20)
+            tempResource = Resource(self.player, x, y)
+            temp = self.player.cells + self.player.buildings + \
+            self.AI.viruses + self.AI.killedCells + [self.AI.base]
+            while tempResource.rect.collidelist(temp) != -1:
+                x = random.randint(50, 1350)
+                y = random.randint(-550, 750)
+                tempResource = Resource(self.player, x, y)
+            print('now to find it', x, y)
+            self.otherResource = tempResource # the x y position of the resource need to be modified
 
     def checkGameCondition(self):
         if len(self.player.buildings) == 1: # only have the resource pool left
