@@ -23,7 +23,7 @@ class PygameGame(object):
         self.gameOver = self.askContinue = False
         self.isPaused = False
         self.inHelp = False
-
+        self.grouping = dict()
         # assume starting at bottom left
         self.x0, self.y0 = 0, 600
 
@@ -120,29 +120,20 @@ class PygameGame(object):
         if self.isDraggingMouse:
             self.isDraggingMouse = False
 
-    def leftClick(self, coords):
-        self.selected = [ ]
-        for cell in self.player.cells:
-            cell.checkSelection(coords)
-        for building in self.player.buildings:
-            building.checkSelection(coords)
-        
+    def adjustView(self,coords):
         x, y = coords
         cx, cy = x + self.scrollX, y + self.scrollY
         if pygame.Rect(0, 59, 142, 142).collidepoint((cx,cy)):
             cy -= 59
-            print(cx, cy)
             sx = max(0, cx - 40) if cx < 80 else min(60, cx - 40)
             sy = max(0, cy - 39) if cy < 80 else min(60, cy - 39)
-            print(cx, cy,sx,sy)
             self.scrollX = -sx * 10
             self.scrollY = -10 * (sy - 60)
 
+    def checkContinue(self, coords):
         if self.askContinue:
-            print('huh?')
             x, y = coords
             if self.askScreen.buttons[1].rect.collidepoint((x + self.scrollX,y + self.scrollY)):
-                print('yay')
                 self.currentGoal += 10
                 if self.AI.spawnInterval > 1000:
                     self.AI.spawnInterval -= 1000
@@ -152,9 +143,18 @@ class PygameGame(object):
                 self.askContinue = False
             
             elif self.askScreen.buttons[2].rect.collidepoint((x + self.scrollX,y + self.scrollY)):
-                print('nah')
                 self.askContinue = False
                 self.gameOver = True
+
+    def leftClick(self, coords):
+        self.selected = [ ]
+        for cell in self.player.cells:
+            cell.checkSelection(coords)
+        for building in self.player.buildings:
+            building.checkSelection(coords)
+        
+        self.adjustView(coords)
+        self.checkContinue(coords)
 
 
     def setAttackStatus(self, coords):
@@ -237,6 +237,30 @@ class PygameGame(object):
 
         if key == pygame.K_SPACE:
             self.isPaused = not self.isPaused
+
+        if key in [pygame.K_1, pygame.K_2, pygame.K_3]:
+            for thing in self.selected:
+                thing.isSelected = False
+            group = self.grouping.get(key, None)
+            if group != None:
+                self.selected = group
+                cx,cy = group[0].x, group[0].y
+                self.resetView(cx, cy)
+                for thing in group:
+                    thing.isSelected = True
+
+    def resetView(self,cx,cy):
+        if cx < 400:
+            self.scrollX = 30
+        elif cx > 400 and cx < 1000: 
+            self.scrollX = 400 - cx
+        elif cx >= 1000: self.scrollX = -600
+        
+        if cy > 390:
+            self.scrollY = -20
+        elif cy < - 300:
+            self.scrollY = 600
+        else: self.scrollY = 390 - cy
 ###########################################################################
     def redrawAll(self, screen): pass
 
@@ -405,13 +429,20 @@ class PygameGame(object):
                         self.inHelp = False
                         self.isPaused = False
                     self._keys[event.key] = True
-                    self.keyPressed(event.key)
                     if pygame.key.get_pressed()[pygame.K_b]:
                         (x,y) = pygame.mouse.get_pos()
                         self.player.build(x - self.scrollX, y - self.scrollY)
                     if pygame.key.get_pressed()[pygame.K_m]:
                         (x,y) = pygame.mouse.get_pos()
                         self.player.buildBig(x - self.scrollX, y - self.scrollY)
+                    if pygame.key.get_mods() & pygame.KMOD_SHIFT:
+                        if pygame.key.get_pressed()[pygame.K_1]:
+                            self.grouping[pygame.K_1] = self.selected
+                        if pygame.key.get_pressed()[pygame.K_2]:
+                            self.grouping[pygame.K_2] = self.selected
+                        if pygame.key.get_pressed()[pygame.K_3]:
+                            self.grouping[pygame.K_3] = self.selected
+                    self.keyPressed(event.key)
 
             #####################################################
             ################### Drawings ########################

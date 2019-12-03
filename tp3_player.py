@@ -251,7 +251,7 @@ class Cell(object):
                      int(self.y + self.player.app.scrollY)), self.r + 1, True)
         self.drawHealthBar(screen)
 
-    def drawDead(self,screen):
+    def drawDead(self, screen):
         temp_rect = self.rect.copy()
         temp_rect.move_ip(self.player.app.scrollX, self.player.app.scrollY)
         screen.blit(Cell.deadimage, temp_rect)
@@ -270,7 +270,7 @@ class Macrophage(Cell):
     def spawnVirus(self):pass
     def farm(self):pass
     def merge(self):pass
-    def drawDead(self):pass
+    def drawDead(self, screen):pass
     def draw(self, screen):
         temp_rect = self.rect.copy()
         temp_rect.move_ip(self.player.app.scrollX, self.player.app.scrollY)
