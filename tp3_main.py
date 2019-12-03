@@ -60,6 +60,7 @@ class PygameGame(object):
             self.player.attack()
             self.player.farm()
             self.player.production()
+            self.player.checkVisible()
             self.AI.attack()
             self.AI.spawn()
             self.checkGameCondition()
@@ -326,6 +327,12 @@ class PygameGame(object):
         screen.blit(text, rect1) # text
     
     def drawMiniMap(self,minimap):
+        belongings = self.player.cells + self.player.buildings
+        for item in belongings:
+            cx,cy = item.x /10, item.y / 10 + 60
+            color = pygame.Color('#424242')
+            r = 40
+            pygame.draw.circle(minimap,color,(int(cx),int(cy)),r)
         g = pygame.Color('#4caf50')
         for cell in self.player.cells:
             pygame.draw.circle(minimap,g,(int(cell.x /10), int(cell.y/10) + 60), 2)
@@ -334,8 +341,11 @@ class PygameGame(object):
             rect = pygame.Rect(building.x/10 -2, building.y/10 + 58, 4, 4)
             pygame.draw.rect(minimap,blue,rect)
         red = pygame.Color('#ff1744')
-        for virus in self.AI.viruses:
-            pygame.draw.circle(minimap,red,(int(virus.x/10),int(virus.y/10)+60),2)
+        purple = pygame.Color('#ea80fc')
+        for virus in self.player.visible:
+            color = red if isinstance(virus, Virus) else purple
+            pygame.draw.circle(minimap,color,(int(virus.x/10),int(virus.y/10)+60),2)
+
         view_rect = pygame.Rect( - int(self.scrollX / 10), 60 - int(self.scrollY / 10), 80, 78 )
         pygame.draw.rect(minimap, (255,255,255),view_rect,True)
 
@@ -447,8 +457,7 @@ class PygameGame(object):
             #####################################################
             ################### Drawings ########################
             #fill background colors of surfaces
-            screen.fill(pygame.Color('#fff59d')) #(255, 255, 179)
-
+            screen.fill(pygame.Color('#fff59d'))#'#a1887f')) #(255, 255, 179)
             # draw everything
             self.player.draw(screen)
             self.AI.draw(screen)

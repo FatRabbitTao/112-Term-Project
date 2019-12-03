@@ -244,7 +244,6 @@ class Cell(object):
         temp_rect = self.rect.copy()
         temp_rect.move_ip(self.player.app.scrollX, self.player.app.scrollY)
         screen.blit(Cell.image, temp_rect)
-
         if self.isSelected:
             pygame.draw.circle(screen, pygame.Color('#905548'),\
                 (int(self.x + self.player.app.scrollX),\
@@ -496,6 +495,16 @@ class Player(object):
         self.cells = [  ]
         self.initializeCell()
         self.farmingCells = [ ]
+        self.visible = [ ]
+    
+    def checkVisible(self):
+        temp = self.buildings + self.cells
+        temp2 = self.app.AI.viruses + self.app.AI.killedCells
+        self.visible = [ ]
+        for item in temp:
+            for virus in temp2:
+                if (item.x - virus.x)**2 + (item.y - virus.y)** 2 <= 160000:
+                    self.visible.append(virus)
     
     def initializeCell(self):
         for i in range(self.initialNumCell):
@@ -560,11 +569,6 @@ class Player(object):
         ydiff = y1 - y0
 
         dx,dy = obj1.movingDir
-
-        # prevent jerking
-        #if abs(dy * xdiff - dx * ydiff) <= 1:
-        #   obj1.isMoving = False
-        #print(dx, dy, xdiff, ydiff)
 
         obj1.x = x0 - xdiff / 2
         obj1.y = y0 - ydiff / 2

@@ -284,10 +284,10 @@ class AI(object):
             virus.attack()
 
     def draw(self,screen):
-        for virus in self.viruses:
-            virus.draw(screen)
-        for cell in self.killedCells:
-            cell.drawDead(screen)
+        for virus in self.app.player.visible:
+            if isinstance(virus, Virus): 
+                virus.draw(screen)
+            else: virus.drawDead(screen)
         self.base.draw(screen)
         
         
