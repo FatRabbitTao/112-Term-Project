@@ -3,9 +3,9 @@ from tp3_attacker import *
 
 class Cell(object):
     img = pygame.image.load('cell.png')
-    image = pygame.transform.scale(img,(22,22))
+    image = pygame.transform.scale(img,(42,42))
     dimg = pygame.image.load('deadcell.png')
-    deadimage = pygame.transform.scale(dimg,(22,22))
+    deadimage = pygame.transform.scale(dimg,(42,42))
 
 # pic from: https://www.pinterest.com/pin/365917538467273861/
     def __init__(self, player, x, y):
@@ -13,7 +13,7 @@ class Cell(object):
         self.x, self.y = x, y
         self.isSelected = False
         self.color = pygame.Color('#ff5252')
-        self.r = 10
+        self.r = 20
         self.velocity = 3
         self.isMoving = False
         self.isFarming = False
@@ -22,7 +22,7 @@ class Cell(object):
 
         self.health = self.originalHealth = 11
         self.ad = 2
-        self.barWidth = 2
+        self.barWidth = 4
 
         self.attackTarget = None
         self.birth_time = pygame.time.get_ticks()
@@ -260,7 +260,7 @@ class Macrophage(Cell):
     image = pygame.transform.scale(img, (34,34))
     def __init__(self,player,x,y):
         super().__init__(player,x,y)
-        self.r = 15
+        self.r = 30
         self.health = 20
         self.color = pygame.Color('#9e9e9e')
         self.rect = pygame.Rect(self.x - self.r, self.y - self.r, self.r*2, self.r*2)
@@ -294,8 +294,7 @@ class Building(object):
         self.player = player
         self.color = (255, 0, 0)
         self.isMoving = False
-        self.originalHealth = 100
-        self.health = 100
+        self.originalHealth = self.health = 67
         self.barWidth = 1
     
     def produce(self):
@@ -425,7 +424,7 @@ class Base(Building):
         super().__init__(x, y, player)
         self.color = pygame.Color('#f9a825')
         self.size = 50
-        self.health = self.originalHealth = 150
+        self.health = self.originalHealth = 100
 
         self.rect = pygame.Rect(self.x - self.size / 2 , self.y - self.size / 2, self.size, self.size)
 
@@ -508,7 +507,7 @@ class Player(object):
     
     def initializeCell(self):
         for i in range(self.initialNumCell):
-            cell = Cell(self, self.base.x, self.base.y - 50 - i * 30)
+            cell = Cell(self, self.base.x, self.base.y - 50 - i * 50)
             self.cells.append(cell)
 
     def build(self, x, y):
@@ -521,7 +520,7 @@ class Player(object):
 
     def buildBig(self, x, y):
         buildingCost = 40
-        if self.resource >= buildingCost:
+        if self.base.level >= 1 and self.resource >= buildingCost:
             newBuilding = ImmuneSystem(x, y, self)
             if not self.checkIfOccupied(newBuilding):
                 self.buildings.append(newBuilding)

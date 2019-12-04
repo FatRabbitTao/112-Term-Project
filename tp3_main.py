@@ -10,7 +10,7 @@ class PygameGame(object):
         ''' return whether a specific key is being held '''
         return self._keys.get(key, False)
 
-    def __init__(self, width=800, height=780, fps=30, title="testing..."):
+    def __init__(self, width=800, height=780, fps=30, title="IMMUNITY..."):
         self.width = width
         self.height = height
         self.fps = fps
@@ -23,6 +23,7 @@ class PygameGame(object):
         self.gameOver = self.askContinue = False
         self.isPaused = False
         self.inHelp = False
+        self.pageCount = 0
         self.grouping = dict()
         # assume starting at bottom left
         self.x0, self.y0 = 0, 600
@@ -48,9 +49,13 @@ class PygameGame(object):
 
     def loadImage(self):
         startImg = pygame.image.load('startPic.png')
-        self.startImg = pygame.transform.scale(startImg, (500, 200))
-        helpImg = pygame.image.load('helpPic.png')
-        self.helpImg = pygame.transform.scale(helpImg, (500, 250))
+        self.startImg = pygame.transform.scale(startImg, (800, 450))
+        helpImg1 = pygame.image.load('helpPic1.png')
+        self.helpImg1 = pygame.transform.scale(helpImg1, (800, 450))
+        helpImg2 = pygame.image.load('helpPic2.png')
+        self.helpImg2 = pygame.transform.scale(helpImg2, (800, 450))
+        helpImg3 = pygame.image.load('helpPic3.png')
+        self.helpImg3 = pygame.transform.scale(helpImg3, (800, 450))
 #####################################################################
 ################ Controllers ########################################
     
@@ -68,8 +73,6 @@ class PygameGame(object):
 
     def newResource(self):
         if self.player.resourceBase.progress <= 0:
-            print('running out')
-            print(hasattr(self.player,'otherResource'))
             x = random.randint(700, 1350)
             y = random.randint(-570, 100)
             tempResource = Resource(self.player, x, y)
@@ -79,7 +82,6 @@ class PygameGame(object):
                 x = random.randint(700, 1350)
                 y = random.randint(-570, 100)
                 tempResource = Resource(self.player, x, y)
-            print('now to find it', x, y)
             self.player.resourceBase = tempResource # the x y position of the resource need to be modified
             self.player.buildings[0] = tempResource
 
@@ -268,14 +270,21 @@ class PygameGame(object):
     def drawStart(self,screen):
         if self.waitingToStart:
             width = 500
-            start = self.width / 2 - width / 2
+            start = 0
             screen.blit(self.startImg, pygame.Rect(start,100,500,500))
 
     def drawHelp(self,screen):
         if self.inHelp:
             width = 500
-            start = self.width / 2 - width / 2
-            screen.blit(self.helpImg, pygame.Rect(start,100,500,500) )
+            start = 0
+            imgNum = self.pageCount % 3 + 1
+            if imgNum == 1:
+                image = self.helpImg1
+            elif imgNum == 2:
+                image = self.helpImg2
+            elif imgNum == 3:
+                image = self.helpImg3
+            screen.blit(image, pygame.Rect(start,100,500,500) )
 
     def drawSelectionInfo(self,screen):
         font = pygame.font.SysFont("Helvetica", 22)
@@ -436,8 +445,13 @@ class PygameGame(object):
                     if self.waitingToStart:
                         self.waitingToStart = False
                     if self.inHelp:
-                        self.inHelp = False
-                        self.isPaused = False
+                        if pygame.key.get_pressed()[pygame.K_z]:
+                            self.inHelp = False
+                            self.isPaused = False
+                        elif pygame.key.get_pressed()[pygame.K_LEFT]:
+                            self.pageCount -= 1
+                        elif pygame.key.get_pressed()[pygame.K_RIGHT]:
+                            self.pageCount += 1
                     self._keys[event.key] = True
                     if pygame.key.get_pressed()[pygame.K_b]:
                         (x,y) = pygame.mouse.get_pos()
@@ -469,8 +483,7 @@ class PygameGame(object):
                 pygame.draw.rect(screen, (0,0,0),temp_rect,True)
                 self.selectionBox = None
 
-            self.drawStart(screen)
-            self.drawHelp(screen)
+            
             self.player.drawSpecs(screen)
             self.drawMiniMap(minimap)
             
@@ -479,6 +492,9 @@ class PygameGame(object):
             # draw selection info
             if len(self.selected) > 0:
                 self.drawSelectionInfo(screen)
+            
+            self.drawStart(screen)
+            self.drawHelp(screen)
             
             if self.askContinue:
                 self.drawAskContinue(screen)
