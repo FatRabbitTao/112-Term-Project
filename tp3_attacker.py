@@ -203,7 +203,7 @@ class VirusBase(object):
     image = pygame.transform.scale(pygame.image.load('virusBase.png'), (100,100))
     def __init__(self, AI):
         self.x, self.y = 1300, -500
-        self.size = 50
+        self.size = 100
         self.rect = pygame.Rect(self.x - self.size / 2, self.y - self.size / 2, self.size, self.size)
         self.isProducing = False
         self.color = pygame.Color('#424242')
