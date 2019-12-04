@@ -48,3 +48,35 @@ class AskContinue(object):
     def draw(self,screen):
         for button in self.buttons:
             button.draw(screen)
+
+
+class Map(object):
+    img = pygame.image.load('bubble.png')
+    image = pygame.transform.scale(img, (50,50))
+    def __init__(self, app):
+        self.app = app
+        self.rects = [ ]
+        self.generate_obstacles()
+
+    def generate_obstacles(self):
+        size = 50
+        for _ in range(42):
+            sx = random.randint(120, 1900)
+            sy = random.randint(- 1200, 680)
+            rect = pygame.Rect(sx, sy, size, size)
+            self.rects.append(rect)
+        temp_rect = pygame.Rect.copy(self.app.player.base.rect)
+        temp_rect.inflate_ip(100,100)
+        collide = temp_rect.collidelist(self.rects)
+        if collide != -1:
+            if isinstance(collide,int):
+                self.rects.pop(collide)
+            else:
+                for i in collide:
+                    self.rects.pop(i)
+
+    def draw(self, screen):
+        for rect in self.rects:
+            temp_rect = rect.copy()
+            temp_rect.move_ip(self.app.scrollX, self.app.scrollY)
+            screen.blit(Map.image, temp_rect)

@@ -54,16 +54,14 @@ class Virus(object):
                 temp_rect = pygame.Rect(x - 10, y - 10, w + 20, h + 20)
                 if self.rect.colliderect(temp_rect):
                     obj.getAttacked()
-                    print('building under attack')
                     return
 
     def getAttacked(self, ad = 2):
         self.health -= ad
-        #print('virus ouch')
+
         if self.health <= 0:
             self.AI.viruses.remove(self)
             self.AI.app.player.score += 1
-            #print('virus died')
 
     def drawHealthBar(self,screen):    
         height = self.r / 5
@@ -99,8 +97,8 @@ class ViolentVirus(Virus):
                 factor = 3 if self.AI.app.player.base.level > 0 else 2
                 self.x, self.y = self.x + dx * factor, self.y + dy * factor
                 x_low_bound = 5
-                x_high_bound = 1390
-                y_low_bound = -570
+                x_high_bound = 2090
+                y_low_bound = -1270
                 y_high_bound = 770
                 if self.x < x_low_bound:
                     self.x = x_low_bound
@@ -144,10 +142,11 @@ class ViolentVirus(Virus):
             else:
                 x = random.random() 
                 y = random.random() 
-                sign = -1 if x < 0 else 1
                 if x == 0: x += 0.0001
                 theta = math.atan(y / x)
+                sign =  -1 if random.random() > 0.45 else 1
                 dx = sign * math.cos(theta) 
+                sign =  1 if random.random() > 0.45 else -1
                 dy = sign * math.sin(theta) 
 
             self.movingDir = (dx, dy)
@@ -155,16 +154,19 @@ class ViolentVirus(Virus):
 
     def checkCollision(self):
         temp = self.AI.app.player.cells + self.AI.app.player.buildings + \
-            self.AI.viruses + self.AI.killedCells + [self.AI.base]
+            self.AI.viruses + self.AI.killedCells + [self.AI.base] + \
+            self.AI.app.all_rects
         for obj in temp:
             # skip if they are actually the same cell
             if self == obj:
                 continue
-            _rect = obj.rect
+            if isinstance(obj,pygame.Rect):
+                _rect = obj
+            else:
+                _rect = obj.rect
             if self.rect.colliderect(_rect): # if the 2 cells touched
                 # if not yet moving
                 if not self.isMoving: return True
-                #print('oops','self:',self.rect,'other:',_rect)
                 
                 self.collide(self, obj)
 
@@ -176,17 +178,15 @@ class ViolentVirus(Virus):
         x1, y1 = obj2.x, obj2.y
 
         # if they are moving towards the same direction
-        if obj2.isMoving and obj1.destination == obj2.destination:
+        if (not isinstance(obj2, pygame.Rect)) and obj2.isMoving and \
+            obj1.destination == obj2.destination:
            obj1.movingDir = obj2.movingDir
 
         xdiff = x1 - x0
         ydiff = y1 - y0
 
         dx,dy = obj1.movingDir
-        # prevent jerking
-        #if abs(dy * xdiff - dx * ydiff) <= 1:
-        #   obj1.isMoving = False
-        #print(dx, dy, xdiff, ydiff)
+
         obj1.x = x0 - xdiff / 2
         obj1.y = y0 - ydiff / 2
         
@@ -202,7 +202,7 @@ class ViolentVirus(Virus):
 class VirusBase(object):
     image = pygame.transform.scale(pygame.image.load('virusBase.png'), (100,100))
     def __init__(self, AI):
-        self.x, self.y = 1300, -500
+        self.x, self.y = 1900, -1200
         self.size = 100
         self.rect = pygame.Rect(self.x - self.size / 2, self.y - self.size / 2, self.size, self.size)
         self.isProducing = False
@@ -257,7 +257,7 @@ class AI(object):
 
     def initializeViruses(self):
         for i in range(self.initialNumOfVirus):
-            newVirus = ViolentVirus(self, self.app.width * 1.2, 5 + self.app.height*(i)/16)
+            newVirus = ViolentVirus(self, self.app.width * 1.2, - 100 + self.app.height*(i)/16)
             self.viruses.append(newVirus)
 
     def spawn(self):

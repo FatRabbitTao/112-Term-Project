@@ -6,7 +6,7 @@ class Cell(object):
     image = pygame.transform.scale(img,(42,42))
     dimg = pygame.image.load('deadcell.png')
     deadimage = pygame.transform.scale(dimg,(42,42))
-    velocity = 3
+    velocity = 4
 # pic from: https://www.pinterest.com/pin/365917538467273861/
     def __init__(self, player, x, y):
         self.player = player
@@ -43,13 +43,11 @@ class Cell(object):
                 if (abs(self.x - x) < 1 and abs(self.y - y) < 1):
                     # if reached, stop moving
                     self.isMoving = False
-                    print('reached')
 
                 # if for weird reason overshot # may not be necessary
                 elif dx != 0 and dy != 0 and \
                     ((x - self.x) * dx < 0 or (y - self.y) * dy < 0):
                     self.isMoving = False # overshot
-                    print('overshot')
 
                 else:
                     self.x, self.y = self.x + dx, self.y + dy
@@ -58,23 +56,23 @@ class Cell(object):
 
     def checkCollision(self):
         temp = self.player.cells + self.player.buildings + \
-            self.player.app.AI.viruses + self.player.app.AI.killedCells
+            self.player.app.AI.viruses + self.player.app.AI.killedCells + \
+            self.player.app.all_rects
         for obj in temp:
             # skip if they are actually the same cell
             if self == obj:
                 continue
-            _rect = obj.rect
+            if isinstance(obj, pygame.Rect):_rect = obj
+            else: _rect = obj.rect
             
             if self.rect.colliderect(_rect): # if the 2 cells touched
                 # if not yet moving
                 if not self.isMoving: return True
-                #print('oops','self:',self.rect,'other:',_rect)
                 
                 self.player.collide(self, obj)
                 (x,y) = self.destination
                 if abs(self.x - x) < 5 * self.r and abs(self.y - y) < 5 * self.r:
                     self.isMoving = False
-                    print('collision_stop')
                 return True
         return False
 
@@ -84,10 +82,10 @@ class Cell(object):
                 # move towards there
                 self.setMovingDirection()
                 self.isMoving = True
-                #print('farming...')
             # if reaching 1 of them
-                if (self.x - self.player.resourceBase.x)**2 + \
-                    (self.y - self.player.resourceBase.y)**2 <= (self.r + self.player.resourceBase.r)**2 + 1200:
+                resourceBase_rect = pygame.Rect.copy(self.player.resourceBase.rect)
+                resourceBase_rect.inflate_ip(10,10)
+                if self.rect.colliderect(resourceBase_rect):
                     self.x += 25
                     self.player.resourceBase.progress -= 5
                     self.destination = (self.player.base.x, self.player.base.y)
@@ -98,8 +96,10 @@ class Cell(object):
             elif self.destination == (self.player.base.x, self.player.base.y):
                 self.setMovingDirection()
                 self.isMoving = True
-                if (self.x - self.player.base.x)**2 + \
-                    (self.y - self.player.base.y)**2 <= (self.r + self.player.base.size/2)**2 + 1200:
+                base_rect = pygame.Rect.copy(self.player.base.rect)
+                base_rect.inflate_ip(10,10)
+                if self.rect.colliderect(base_rect):
+                    '(self.x - self.player.base.x)**2 + (self.y - self.player.base.y)**2 <= (self.r + self.player.base.size/2)**2 + 1600:'
                     # change move direction
                     self.x -= 25
                     self.destination = (self.player.resourceBase.x, self.player.resourceBase.y)
@@ -124,7 +124,6 @@ class Cell(object):
             else:
                 (x, y) = self.attackTarget
             if abs(self.x - x) > 5 * self.r or abs(self.y - y) > 5 * self.r:
-                #print(self.rect,'move')
                 self.isMoving = True
                 self.destination = (x, y)
 
@@ -159,9 +158,7 @@ class Cell(object):
 
     def getAttacked(self):
         self.health -= 1
-        print('ouch')
         if self.health <= 0:
-            print('rip')
             self.color = pygame.Color('#9575cd')#(153, 102, 255)
             self.noOfNewVirus = 2
             self.deathTime = pygame.time.get_ticks()
@@ -182,14 +179,14 @@ class Cell(object):
                     newVirus = ViolentVirus(self.player.app.AI, x, y)
                     self.player.app.AI.viruses.append(newVirus)
                     self.noOfNewVirus -= 1
-                    print('yay new virus', self.noOfNewVirus)
                     self.deathTime = nowTime 
     
     # just for spawning viruses
     def checkAvailableLocations(self):
         start = random.randint(1 ,6)
         angle = math.pi / 6
-        temp = self.player.cells + self.player.buildings + self.player.app.AI.viruses
+        temp = self.player.cells + self.player.buildings + self.player.app.AI.viruses + \
+            self.player.app.all_rects
 
         for i in range(start, start + 12):
             x = self.x + math.cos(angle * i) * self.r * 2
@@ -264,6 +261,7 @@ class Macrophage(Cell):
         self.color = pygame.Color('#9e9e9e')
         self.rect = pygame.Rect(self.x - self.r, self.y - self.r, self.r*2, self.r*2)
         self.ad = 10
+        self.velocity = 3
 # pic from: https://www.pinterest.com/pin/127367495699425645/
     def spawnVirus(self):pass
     def farm(self):pass
@@ -293,8 +291,8 @@ class Building(object):
         self.player = player
         self.color = (255, 0, 0)
         self.isMoving = False
-        self.originalHealth = self.health = 67
-        self.barWidth = 2
+        self.originalHealth = self.health = 80
+        self.barWidth = 1
     
     def produce(self):
         producingCost = 5
@@ -347,7 +345,7 @@ class Building(object):
     def drawHealthBar(self,screen):    
         height = self.size / 10
         start_x = self.x - self.size / 2
-        start_y = self.y - self.size / 2 - height * 2
+        start_y = self.y - self.size / 2 - height * 3
 
         for i in range(self.health):
             tempRect = pygame.Rect(start_x + i * self.size / self.originalHealth * self.barWidth \
@@ -479,14 +477,18 @@ class Resource(object):
         n = self.progress // 100
         for i in range(n):
             tempRect = pygame.Rect(start_x + i * 8 + self.player.app.scrollX,\
-                 start_y + self.player.app.scrollY, 4, height)
+                 start_y + self.player.app.scrollY, 8, height)
             pygame.draw.rect(screen, (255,0,0), tempRect)
 
 class Player(object):
     def __init__(self, app):
         self.app = app
         self.base = Base(self)
-        self.resourceBase = Resource(self, self.base.x, self.base.y - 500)
+        r = random.randint(600, 700)
+        theta = random.randint(50, 157) / 100
+        x = self.base.x + r * math.cos(theta)
+        y = self.base.y - r * math.sin(theta)
+        self.resourceBase = Resource(self, x,y)
         self.buildings = [self.resourceBase, self.base]
         self.score = 0
         self.resource = 0
@@ -561,7 +563,7 @@ class Player(object):
         x1, y1 = obj2.x, obj2.y
 
         # if they are moving towards the same direction
-        if obj2.isMoving and obj1.destination == obj2.destination:
+        if (not isinstance(obj2, pygame.Rect)) and obj2.isMoving and obj1.destination == obj2.destination:
            obj1.movingDir = obj2.movingDir
 
         xdiff = x1 - x0

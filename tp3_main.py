@@ -15,9 +15,6 @@ class PygameGame(object):
         self.height = height
         self.fps = fps
         self.title = title
-        # list of objects, when checking, check obj.rect
-        self.all_objects = [ ]
-        self.rects = [ ]
         self.selected = [ ]
         self.scrollX, self.scrollY = 0, 0
         self.gameOver = self.askContinue = False
@@ -36,6 +33,8 @@ class PygameGame(object):
         self.waitingToStart = True
         self.player = Player(self)
         self.AI = AI(self)
+        self.map = Map(self)
+        self.all_rects = self.map.rects
         self.loadMusic()
         self.loadImage()
         # levels and goals (changeable)
@@ -61,9 +60,9 @@ class PygameGame(object):
     
     def timerFired(self, dt):
         if (not self.gameOver) and (not self.waitingToStart) and (not self.isPaused):
+            self.player.farm()
             self.player.moveCells()
             self.player.attack()
-            self.player.farm()
             self.player.production()
             self.player.checkVisible()
             self.AI.attack()
@@ -100,12 +99,11 @@ class PygameGame(object):
 
     def makeVisible(self, dx, dy):
         minScroll = 50
-        maxScroll = -600
+        maxScroll = - 1300
         if self.scrollX + dx < minScroll and self.scrollY + dy > - minScroll and \
             self.scrollY + dy < - maxScroll and self.scrollX + dx > maxScroll:
             self.scrollX += dx
             self.scrollY += dy
-        #print(self.scrollX, self.scrollY)
         
     def createSelectionBox(self, event_x, event_y):
         start_x, start_y = self.dragStartPos
@@ -128,10 +126,10 @@ class PygameGame(object):
         cx, cy = x + self.scrollX, y + self.scrollY
         if pygame.Rect(0, 59, 142, 142).collidepoint((cx,cy)):
             cy -= 59
-            sx = max(0, cx - 40) if cx < 80 else min(60, cx - 40)
-            sy = max(0, cy - 39) if cy < 80 else min(60, cy - 39)
-            self.scrollX = -sx * 10
-            self.scrollY = -10 * (sy - 60)
+            sx = max(0, cx - 40) if cx < 100 else min(87, cx - 40)
+            sy = max(0, cy - 39) if cy < 100 else min(87, cy - 39)
+            self.scrollX = -sx * 15
+            self.scrollY = -15 * (sy - 87)
 
     def checkContinue(self, coords):
         if self.askContinue:
@@ -207,6 +205,7 @@ class PygameGame(object):
             oldCell.isFarming = False
 
     def rightClick(self, coords):
+        
         for i in range(len(self.player.cells)-1, -1, -1):
             cell = self.player.cells[i]
             if cell.isSelected:
@@ -215,7 +214,13 @@ class PygameGame(object):
                     self.player.farmingCells.remove(cell)
                 if cell.attackTarget != None:
                     cell.attackTarget = None
-                cell.setMoveStatus(coords)
+                x, y = coords
+                cx, cy = x + self.scrollX, y + self.scrollY
+                if pygame.Rect(0, 59, 142, 142).collidepoint((cx,cy)):
+                    x_target = cx * 15
+                    y_target = (cy - 59) * 15 - 1300
+                    cell.setMoveStatus((x_target,y_target))
+                else: cell.setMoveStatus(coords)
             
     def keyPressed(self, key):
         if key == pygame.K_s:
@@ -255,14 +260,15 @@ class PygameGame(object):
     def resetView(self,cx,cy):
         if cx < 400:
             self.scrollX = 30
-        elif cx > 400 and cx < 1000: 
+        elif cx > 400 and cx < 1600: 
             self.scrollX = 400 - cx
-        elif cx >= 1000: self.scrollX = -600
+        elif cx >= 1600: 
+            self.scrollX = - 1280
         
         if cy > 390:
             self.scrollY = -20
-        elif cy < - 300:
-            self.scrollY = 600
+        elif cy < - 890:
+            self.scrollY = 1280
         else: self.scrollY = 390 - cy
 ###########################################################################
     def redrawAll(self, screen): pass
@@ -338,24 +344,24 @@ class PygameGame(object):
     def drawMiniMap(self,minimap):
         belongings = self.player.cells + self.player.buildings
         for item in belongings:
-            cx,cy = item.x /10, item.y / 10 + 60
+            cx,cy = item.x /15, item.y / 15 + 87
             color = pygame.Color('#424242')
-            r = 40
+            r = 26
             pygame.draw.circle(minimap,color,(int(cx),int(cy)),r)
         g = pygame.Color('#4caf50')
         for cell in self.player.cells:
-            pygame.draw.circle(minimap,g,(int(cell.x /10), int(cell.y/10) + 60), 2)
+            pygame.draw.circle(minimap,g,(int(cell.x /15), int(cell.y/15) + 87), 2)
         blue = pygame.Color('#42a5f5')
         for building in self.player.buildings:
-            rect = pygame.Rect(building.x/10 -2, building.y/10 + 58, 4, 4)
+            rect = pygame.Rect(building.x/15 -2, building.y/15 + 85, 4, 4)
             pygame.draw.rect(minimap,blue,rect)
         red = pygame.Color('#ff1744')
         purple = pygame.Color('#ea80fc')
         for virus in self.player.visible:
             color = red if isinstance(virus, Virus) else purple
-            pygame.draw.circle(minimap,color,(int(virus.x/10),int(virus.y/10)+60),2)
+            pygame.draw.circle(minimap,color,(int(virus.x/15),int(virus.y/15)+87),2)
 
-        view_rect = pygame.Rect( - int(self.scrollX / 10), 60 - int(self.scrollY / 10), 80, 78 )
+        view_rect = pygame.Rect( - int(self.scrollX / 15), 87 - int(self.scrollY / 15), 53, 52 )
         pygame.draw.rect(minimap, (255,255,255),view_rect,True)
 
     def run(self):
@@ -444,6 +450,10 @@ class PygameGame(object):
                 if event.type == pygame.KEYDOWN:
                     if self.waitingToStart:
                         self.waitingToStart = False
+                    # cheats
+                    if pygame.key.get_pressed()[pygame.K_F1]:
+                        self.player.resource += 200
+
                     if self.inHelp:
                         if pygame.key.get_pressed()[pygame.K_z]:
                             self.inHelp = False
@@ -472,6 +482,8 @@ class PygameGame(object):
             ################### Drawings ########################
             #fill background colors of surfaces
             screen.fill(pygame.Color('#fff59d'))#'#a1887f')) #(255, 255, 179)
+
+            self.map.draw(screen)
             # draw everything
             self.player.draw(screen)
             self.AI.draw(screen)

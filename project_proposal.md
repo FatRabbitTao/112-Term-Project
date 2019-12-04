@@ -1,6 +1,15 @@
 Name:Viola Chen Yitao
 Andrew ID: yitaoche
+------------------------------Dec 04 2019 -----------------------
+# user study feedback
+The learning curve for the game is a bit too deep ie. many of the controls and keyboard shortcut and mouse-key coordinations are very foreign for people who have never played similar games before.
+As a respond to this, I have improved my help screen feature and the instructions and also added a quick notice bar at the bottom of the screen notifying player what can be done with the current unit selected.
+______________________________Dec 04 2019 _______________________
+# TP3 update
 
+mainly working on minimap, game play improvement such as shortcut to group select / switch camera position, more powerups/bonus features included
+
+-------------------------------------------------------------------------
 #Project description:
 The preliminary title for this project is 'Immunity War'. This is an interactive game where the player will play the role of immune system to defend the invasion of viruses (into the body), with real-time-strategy style. ie. control units to move around and attack, construct buildings and farm resources.
 The goal of the immune system is to eliminate a given number of viruses (the level of difficulty could increase with increasing number of viruses being killed), whereaas the goal of the viruses is to destroy all the buildings of the immune system.
@@ -37,3 +46,5 @@ pygame
 -time line change:
 	terrain generation and graphics in tp3, focus on advanced game play in week 2
 -multiplayer version may not be implemented
+
+
