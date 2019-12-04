@@ -3,14 +3,14 @@ from tp3_player import *
 
 class Virus(object):
     img = pygame.image.load('T4virus.png')
-    image = pygame.transform.scale(img, (30,30))
+    image = pygame.transform.scale(img, (60,60))
 # pic from https://www.pinterest.com/pin/395894623487498283/
     def __init__(self, AI, x, y):
         self.AI = AI
         self.x, self.y = x, y
         # green
         self.color = pygame.Color('#64dd17')
-        self.r = 10
+        self.r = 20
         self.velocity = 3
         self.isMoving = False
         self.rect = pygame.Rect(self.x - self.r, self.y - self.r, self.r*2, self.r*2)
@@ -74,12 +74,12 @@ class Virus(object):
         for i in range(self.health):
             tempRect = pygame.Rect(start_x + i * self.barWidth + self.AI.app.scrollX,\
                  start_y + self.AI.app.scrollY, self.barWidth, height)
-            pygame.draw.rect(screen, (255,0,0), tempRect, 1)
+            pygame.draw.rect(screen, (255,0,0), tempRect)
 
     def draw(self, screen):
         temp_rect = self.rect.copy()
         temp_rect.move_ip(self.AI.app.scrollX, self.AI.app.scrollY)
-        temp_rect.inflate_ip(10,10)
+        temp_rect.inflate_ip(20,20)
         screen.blit(Virus.image, temp_rect)
 
         self.drawHealthBar(screen)
@@ -200,7 +200,7 @@ class ViolentVirus(Virus):
 
 
 class VirusBase(object):
-    image = pygame.transform.scale(pygame.image.load('virusBase.png'), (50,50))
+    image = pygame.transform.scale(pygame.image.load('virusBase.png'), (100,100))
     def __init__(self, AI):
         self.x, self.y = 1300, -500
         self.size = 50
@@ -211,12 +211,12 @@ class VirusBase(object):
         self.AI = AI
     
     def produce(self):
-        x = self.x + random.choice([-1,1]) * random.randint(36,50)
-        y = self.y + random.choice([-1,1]) * random.randint(36,50)
+        x = self.x + random.choice([-1,1]) * random.randint(72,100)
+        y = self.y + random.choice([-1,1]) * random.randint(72,100)
         newVirus = ViolentVirus(self.AI, x, y)
         while newVirus.checkCollision() or newVirus in self.AI.viruses:
-            x = self.x + random.choice([-1,1]) * random.randint(36,50)
-            y = self.y + random.choice([-1,1]) * random.randint(36,50)
+            x = self.x + random.choice([-1,1]) * random.randint(72,100)
+            y = self.y + random.choice([-1,1]) * random.randint(72,100)
             newVirus = ViolentVirus(self.AI, x, y)
         self.AI.viruses.append(newVirus)
 
@@ -257,7 +257,7 @@ class AI(object):
 
     def initializeViruses(self):
         for i in range(self.initialNumOfVirus):
-            newVirus = ViolentVirus(self, self.app.width*.8, 5 + self.app.height*(i)/16)
+            newVirus = ViolentVirus(self, self.app.width * 1.2, 5 + self.app.height*(i)/16)
             self.viruses.append(newVirus)
 
     def spawn(self):

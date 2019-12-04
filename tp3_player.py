@@ -6,7 +6,7 @@ class Cell(object):
     image = pygame.transform.scale(img,(42,42))
     dimg = pygame.image.load('deadcell.png')
     deadimage = pygame.transform.scale(dimg,(42,42))
-
+    velocity = 3
 # pic from: https://www.pinterest.com/pin/365917538467273861/
     def __init__(self, player, x, y):
         self.player = player
@@ -14,7 +14,7 @@ class Cell(object):
         self.isSelected = False
         self.color = pygame.Color('#ff5252')
         self.r = 20
-        self.velocity = 3
+        self.velocity = Cell.velocity
         self.isMoving = False
         self.isFarming = False
         self.rect = pygame.Rect(self.x - self.r, self.y - self.r, self.r*2, self.r*2)
@@ -80,35 +80,35 @@ class Cell(object):
 
     def farm(self):
         if self.isFarming:
-            if self.destination == (self.player.resourceBase.x - 5, self.player.resourceBase.y):
+            if self.destination == (self.player.resourceBase.x, self.player.resourceBase.y):
                 # move towards there
                 self.setMovingDirection()
                 self.isMoving = True
                 #print('farming...')
             # if reaching 1 of them
                 if (self.x - self.player.resourceBase.x)**2 + \
-                    (self.y - self.player.resourceBase.y)**2 <= (self.r + self.player.resourceBase.r)**2 + 600:
-                    self.x += 10
+                    (self.y - self.player.resourceBase.y)**2 <= (self.r + self.player.resourceBase.r)**2 + 1200:
+                    self.x += 25
                     self.player.resourceBase.progress -= 5
-                    self.destination = (self.player.base.x + 5, self.player.base.y)
+                    self.destination = (self.player.base.x, self.player.base.y)
                     self.setMovingDirection()
                     self.isMoving = True
 
                 # change move direction
-            elif self.destination == (self.player.base.x + 5, self.player.base.y):
+            elif self.destination == (self.player.base.x, self.player.base.y):
                 self.setMovingDirection()
                 self.isMoving = True
                 if (self.x - self.player.base.x)**2 + \
-                    (self.y - self.player.base.y)**2 <= (self.r + self.player.base.size/2)**2 + 500:
+                    (self.y - self.player.base.y)**2 <= (self.r + self.player.base.size/2)**2 + 1200:
                     # change move direction
-                    self.x -= 10
-                    self.destination = (self.player.resourceBase.x - 5, self.player.resourceBase.y)
+                    self.x -= 25
+                    self.destination = (self.player.resourceBase.x, self.player.resourceBase.y)
                     self.setMovingDirection()
                     self.player.resource += 5
                     self.isMoving = True
 
             else:
-                self.destination = (self.player.resourceBase.x - 5, self.player.resourceBase.y)
+                self.destination = (self.player.resourceBase.x, self.player.resourceBase.y)
 
     def merge(self, other): # other is another cell
         self.ad = self.ad + other.ad
@@ -136,7 +136,7 @@ class Cell(object):
             if isinstance(self.attackTarget, Virus):
                 (x,y) = (self.attackTarget.x, self.attackTarget.y)
             else:(x,y) = self.attackTarget
-            if (self.x - x)**2 + (self.y - y)**2 > 5 * self.r ** 2: return
+            #if (self.x - x)**2 + (self.y - y)**2 > 5 * self.r ** 2: return
             # else
             nowTime = pygame.time.get_ticks()
             timeDiff = nowTime - self.birth_time
@@ -148,15 +148,14 @@ class Cell(object):
                     self.attackTarget = None
                     return
 
-                if (self.x - self.attackTarget.x)**2 + (self.y - self.attackTarget.y)**2 <= 20 * self.r **2:
+                if (self.x - self.attackTarget.x)**2 + (self.y - self.attackTarget.y)**2 <= 23 * self.r **2:
                     self.attackTarget.getAttacked(self.ad)
                     return
             else:
                 for virus in self.player.app.AI.viruses:
-                    if (self.x - virus.x)**2 + (self.y - virus.y)**2 <= 20 * self.r **2:
+                    if (self.x - virus.x)**2 + (self.y - virus.y)**2 <= 23 * self.r **2:
                         virus.getAttacked(self.ad)
                         return
-                self.attackTarget = None
 
     def getAttacked(self):
         self.health -= 1
@@ -238,7 +237,7 @@ class Cell(object):
         for i in range(self.health):
             tempRect = pygame.Rect(start_x + i * self.barWidth + self.player.app.scrollX,\
                  start_y + self.player.app.scrollY, self.barWidth, height)
-            pygame.draw.rect(screen, (255,0,0), tempRect, 1)
+            pygame.draw.rect(screen, (255,0,0), tempRect)
 
     def draw(self, screen):
         temp_rect = self.rect.copy()
@@ -257,7 +256,7 @@ class Cell(object):
 
 class Macrophage(Cell):
     img = pygame.image.load('macrophage.png')
-    image = pygame.transform.scale(img, (34,34))
+    image = pygame.transform.scale(img, (66,66))
     def __init__(self,player,x,y):
         super().__init__(player,x,y)
         self.r = 30
@@ -283,9 +282,9 @@ class Macrophage(Cell):
 
 class Building(object):
     img = pygame.image.load('cellfactory.png')
-    image = pygame.transform.scale(img, (60,54))
+    image = pygame.transform.scale(img, (120,108))
     def __init__(self, x, y, player):
-        self.size = 40
+        self.size = 80
         (self.x, self.y) = (x, y)
         self.rect = pygame.Rect(x - self.size / 2 , y - self.size / 2, self.size, self.size)
         self.level = 0
@@ -295,7 +294,7 @@ class Building(object):
         self.color = (255, 0, 0)
         self.isMoving = False
         self.originalHealth = self.health = 67
-        self.barWidth = 1
+        self.barWidth = 2
     
     def produce(self):
         producingCost = 5
@@ -328,6 +327,7 @@ class Building(object):
         buildingCost = 50
         if self.isSelected and self.player.resource >= buildingCost:
             self.level += 1
+            Cell.velocity += 1
             self.player.resource -= buildingCost
 
     def checkSelection(self, selection):
@@ -353,12 +353,12 @@ class Building(object):
             tempRect = pygame.Rect(start_x + i * self.size / self.originalHealth * self.barWidth \
                 + self.player.app.scrollX,\
                  start_y + self.player.app.scrollY, self.barWidth, height)
-            pygame.draw.rect(screen, (255,0,0), tempRect, 1)
+            pygame.draw.rect(screen, (255,0,0), tempRect)
     
     def draw(self, screen):
         temp_rect = self.rect.copy()
         temp_rect.move_ip(self.player.app.scrollX, self.player.app.scrollY)
-        temp_rect.inflate_ip(20, 20)
+        temp_rect.inflate_ip(40, 30)
         screen.blit(Building.image, temp_rect)
         if self.isSelected:
             pygame.draw.rect(screen, (0,0,0), temp_rect, True)
@@ -367,7 +367,7 @@ class Building(object):
 
 class ImmuneSystem(Building):
     temp = pygame.image.load('gudcellfactory.png')
-    image = pygame.transform.scale(temp, (60,56))
+    image = pygame.transform.scale(temp, (120,112))
 
     def __init__(self, x, y, player):
         super().__init__(x, y, player)
@@ -404,7 +404,7 @@ class ImmuneSystem(Building):
     def draw(self,screen):
         temp_rect = self.rect.copy()
         temp_rect.move_ip(self.player.app.scrollX, self.player.app.scrollY)
-        temp_rect.inflate_ip(20,20)
+        temp_rect.inflate_ip(40,36)
         screen.blit(ImmuneSystem.image, temp_rect)
 
         if self.isSelected:
@@ -416,15 +416,15 @@ class ImmuneSystem(Building):
 # base is a special kind of building
 class Base(Building):
     img = pygame.image.load('base.png')
-    image = pygame.transform.scale(img, (75,75))
+    image = pygame.transform.scale(img, (120,120))
     def __init__(self, player):
-        size = 50
-        x = 50
-        y = player.app.height - 100
+        x = 60
+        y = player.app.height - 60
         super().__init__(x, y, player)
         self.color = pygame.Color('#f9a825')
-        self.size = 50
+        self.size = 100
         self.health = self.originalHealth = 100
+        self.barWidth = self.size / self.originalHealth
 
         self.rect = pygame.Rect(self.x - self.size / 2 , self.y - self.size / 2, self.size, self.size)
 
@@ -439,7 +439,7 @@ class Base(Building):
     def draw(self, screen):
         temp_rect = self.rect.copy()
         temp_rect.move_ip(self.player.app.scrollX, self.player.app.scrollY)
-        temp_rect.inflate_ip(20, 20)
+        temp_rect.inflate_ip(10, 10)
         screen.blit(Base.image, temp_rect)
         if self.isSelected:
             pygame.draw.rect(screen, (0,0,0), temp_rect, True)
@@ -448,12 +448,12 @@ class Base(Building):
 
 class Resource(object):
     img = pygame.image.load('resource.png')
-    image = pygame.transform.scale(img, (60,60))
+    image = pygame.transform.scale(img, (110,110))
     def __init__(self, player, x, y):
         self.player = player
         self.x, self.y = x, y
         self.color = pygame.Color('#29b6f6')
-        self.r = 20
+        self.r = 40
         self.rect = pygame.Rect(self.x - self.r , self.y - self.r, self.r * 2, self.r*2)
         self.isSelected = False
         self.isMoving = False
@@ -468,17 +468,17 @@ class Resource(object):
     def draw(self,screen):
         temp_rect = self.rect.copy()
         temp_rect.move_ip(self.player.app.scrollX, self.player.app.scrollY)
-        temp_rect.inflate_ip(10, 10)
+        temp_rect.inflate_ip(20, 20)
         screen.blit(Resource.image, temp_rect)
         self.drawProgressBar(screen)
 
     def drawProgressBar(self,screen):    
-        height = 4
-        start_x = self.x - 18
-        start_y = self.y - 20 - height * 2
+        height = 8
+        start_x = self.x - 36
+        start_y = self.y - 40 - height * 2
         n = self.progress // 100
         for i in range(n):
-            tempRect = pygame.Rect(start_x + i * 4 + self.player.app.scrollX,\
+            tempRect = pygame.Rect(start_x + i * 8 + self.player.app.scrollX,\
                  start_y + self.player.app.scrollY, 4, height)
             pygame.draw.rect(screen, (255,0,0), tempRect)
 
@@ -486,7 +486,7 @@ class Player(object):
     def __init__(self, app):
         self.app = app
         self.base = Base(self)
-        self.resourceBase = Resource(self, self.base.x, self.base.y - 300)
+        self.resourceBase = Resource(self, self.base.x, self.base.y - 500)
         self.buildings = [self.resourceBase, self.base]
         self.score = 0
         self.resource = 0
@@ -507,7 +507,7 @@ class Player(object):
     
     def initializeCell(self):
         for i in range(self.initialNumCell):
-            cell = Cell(self, self.base.x, self.base.y - 50 - i * 50)
+            cell = Cell(self, self.base.x, self.base.y - 100 - i * 50)
             self.cells.append(cell)
 
     def build(self, x, y):
