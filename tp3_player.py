@@ -268,7 +268,7 @@ class Macrophage(Cell):
     def spawnVirus(self):pass
     def farm(self):pass
     def merge(self):pass
-    def drawDead(self, screen):pass
+    #def drawDead(self, screen):pass
     def draw(self, screen):
         temp_rect = self.rect.copy()
         temp_rect.move_ip(self.player.app.scrollX, self.player.app.scrollY)
