@@ -51,7 +51,9 @@ class AskContinue(object):
 
 
 class Map(object):
-    img = pygame.image.load('bubble.png')
+# img from 
+# https://www.123rf.com/photo_107975953_stock-vector-oil-gold-bubble-isolated-on-transparent-background.html
+    img = pygame.image.load('goldbubble.png')
     image = pygame.transform.scale(img, (50,50))
     def __init__(self, app):
         self.app = app
@@ -65,7 +67,7 @@ class Map(object):
             sy = random.randint(- 1200, 680)
             rect = pygame.Rect(sx, sy, size, size)
             self.rects.append(rect)
-        temp_rect = pygame.Rect.copy(self.app.player.base.rect)
+        temp_rect = pygame.Rect.copy(self.app.player.resourceBase.rect)
         temp_rect.inflate_ip(100,100)
         collide = temp_rect.collidelist(self.rects)
         if collide != -1:

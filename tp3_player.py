@@ -86,7 +86,7 @@ class Cell(object):
                 resourceBase_rect = pygame.Rect.copy(self.player.resourceBase.rect)
                 resourceBase_rect.inflate_ip(10,10)
                 if self.rect.colliderect(resourceBase_rect):
-                    self.x += 25
+                    self.x += 10
                     self.player.resourceBase.progress -= 5
                     self.destination = (self.player.base.x, self.player.base.y)
                     self.setMovingDirection()
@@ -101,7 +101,7 @@ class Cell(object):
                 if self.rect.colliderect(base_rect):
                     '(self.x - self.player.base.x)**2 + (self.y - self.player.base.y)**2 <= (self.r + self.player.base.size/2)**2 + 1600:'
                     # change move direction
-                    self.x -= 25
+                    self.x -= 10
                     self.destination = (self.player.resourceBase.x, self.player.resourceBase.y)
                     self.setMovingDirection()
                     self.player.resource += 5
@@ -112,8 +112,10 @@ class Cell(object):
 
     def merge(self, other): # other is another cell
         self.ad = self.ad + other.ad
-        self.health = min(self.health, other.health)
+        self.health = (self.health + other.health)//2
         self.player.cells.remove(other)
+        self.x,self.y = other.x,other.y
+        self.rect = pygame.Rect(self.x - self.r, self.y - self.r, 2*self.r, 2*self.r)
 
     def setAttackStatus(self):
         if self.attackTarget != None:
@@ -485,7 +487,7 @@ class Player(object):
         self.app = app
         self.base = Base(self)
         r = random.randint(600, 700)
-        theta = random.randint(50, 157) / 100
+        theta = random.randint(120, 157) / 100
         x = self.base.x + r * math.cos(theta)
         y = self.base.y - r * math.sin(theta)
         self.resourceBase = Resource(self, x,y)
@@ -529,9 +531,10 @@ class Player(object):
                 self.resource -= buildingCost
 
     def checkIfOccupied(self, newObj):
-        temp = self.cells + self.buildings + self.app.AI.viruses + self.app.AI.killedCells
+        temp = self.cells + self.buildings + self.app.AI.viruses + \
+            self.app.AI.killedCells + self.app.all_rects
         for obj in temp:
-            _rect = obj.rect
+            _rect = obj if isinstance(obj, pygame.Rect) else obj.rect
             if newObj.rect.colliderect(_rect): # if the 2 cells touched
                 return True
         return False

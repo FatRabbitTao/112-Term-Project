@@ -47,6 +47,8 @@ class PygameGame(object):
         pygame.mixer.music.play( -1)
 
     def loadImage(self):
+        #bgimg = pygame.image.load('bg.jpg')
+        #self.bgimg = pygame.transform.scale(bgimg, (800,780))
         startImg = pygame.image.load('startPic.png')
         self.startImg = pygame.transform.scale(startImg, (800, 450))
         helpImg1 = pygame.image.load('helpPic1.png')
@@ -481,7 +483,9 @@ class PygameGame(object):
             #####################################################
             ################### Drawings ########################
             #fill background colors of surfaces
-            screen.fill(pygame.Color('#fff59d'))#'#a1887f')) #(255, 255, 179)
+            #screen.blit(self.bgimg, pygame.Rect(0,0,800,780))
+            #screen.fill(pygame.Color('#fff59d'))#'#a1887f')) #(255, 255, 179)
+            screen.fill((255,255,212))
 
             self.map.draw(screen)
             # draw everything
